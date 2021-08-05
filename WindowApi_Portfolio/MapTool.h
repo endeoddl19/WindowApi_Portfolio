@@ -16,6 +16,7 @@ using namespace Gdiplus;
 struct Tile
 {
 	int spn;
+	int index;
 	POINT pt;
 };
 
@@ -26,9 +27,13 @@ private:
 	Image* imgs[4];
 	POINT curPos;
 	POINT curTile;
-
 	Tile Map[ROW][COL];
-	//Image MapImage[ROW][COL];
+
+	TCHAR onBuff[128], info[128], str[128];
+	TCHAR lpstrFile[128] = L"";
+	TCHAR filter[64] = L"Every File(*.*)\0*.*\0Text File \0 *.txt;*.doc \0 ";
+	DWORD sizeT = 512, c = 0;
+
 	int rtw, rth, mapw, maph, spw, sph;
 	int mapx, mapy, spx, spy;
 	int spnum;
@@ -48,8 +53,8 @@ public:
 	void DrawCurTile(Graphics* graphic);
 	void SelectTile(POINT pt, int n);
 	void SetTile(POINT pt);
-	void LoadMap();
-	void SaveMap();
+	void LoadMap(HWND hWnd, OPENFILENAME OFN);
+	void SaveMap(HWND hWnd, OPENFILENAME OFN, OPENFILENAME SFN);
 };
 
 #endif

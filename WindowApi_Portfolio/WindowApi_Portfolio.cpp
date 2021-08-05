@@ -22,6 +22,7 @@ RECT rectView;
 ULONG_PTR g_GdiToken;
 HWND    ChildWnd[3];
 MapTool mt;
+OPENFILENAME OFN, SFN;
 
 void GDI_Init();
 void GDI_End();
@@ -30,6 +31,7 @@ void GDI_End();
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK    GameWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK    MapToolWndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
@@ -89,6 +91,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_WINDOWAPIPORTFOLIO);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    RegisterClassExW(&wcex);
+
+    wcex.lpfnWndProc = GameWndProc;
+    wcex.lpszMenuName = NULL;
+    wcex.lpszClassName = _T("Game Window Class");
     RegisterClassExW(&wcex);
 
     wcex.lpfnWndProc = MapToolWndProc;
@@ -185,23 +192,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 return 0;
             }
                 break;
-            case ID_FILENEW:
-            {
-                mdicreate.szClass = _T("MapTool Window Class");
-                mdicreate.szTitle = _T("MapTool Window Title");
-                mdicreate.hOwner = hInst;
-                mdicreate.x = CW_USEDEFAULT;
-                mdicreate.y = CW_USEDEFAULT;
-                mdicreate.cx = CW_USEDEFAULT;
-                mdicreate.cy = CW_USEDEFAULT;
-                mdicreate.style = 0;
-                mdicreate.lParam = 0;
-                hWndChild = (HWND)SendMessage(hWndClient,
-                    WM_MDICREATE, 0,
-                    (LPARAM)(LPMDICREATESTRUCT)&mdicreate);
-                return 0;
-            }
-            break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -247,6 +237,60 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return (INT_PTR)FALSE;
 }
+
+LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    PAINTSTRUCT ps;
+    HDC hdc = GetDC(hWnd);
+    int w, h;
+
+    switch (iMsg)
+    {
+    case WM_CREATE:
+        GetClientRect(hWnd, &rectView);
+        w = rectView.right / 20;
+        h = rectView.bottom / 20;
+
+        GDI_Init();
+        SetTimer(hWnd, 1, 32, NULL);
+        break;
+    case WM_TIMER:
+        InvalidateRect(hWnd, &rectView, false);
+        break;
+    case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+        switch (wmId)
+        {
+        
+        
+        }
+    }
+    break;
+    case WM_LBUTTONDOWN:
+    {
+    }
+    break;
+    case WM_PAINT:
+    {
+        hdc = BeginPaint(hWnd, &ps);
+
+       
+        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        EndPaint(hWnd, &ps);
+    }
+    break;
+    case WM_DESTROY:
+        GDI_End();
+        KillTimer(hWnd, 1);
+        ReleaseDC(hWnd, hdc);
+        PostQuitMessage(0);
+        break;
+    }
+    return DefMDIChildProc(hWnd, iMsg, wParam, lParam);
+}
+
 
 LRESULT CALLBACK MapToolWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -313,8 +357,10 @@ LRESULT CALLBACK MapToolWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPar
             mt.DrawSP(graphic, spn);
             break;
         case IDC_SAVE_BTN:
+            mt.SaveMap(hWnd, OFN, SFN);
             break;
         case IDC_LOAD_BTN:
+            mt.LoadMap(hWnd, OFN);
             break;
         case IDC_END_BTN:
             DestroyWindow(hWnd);

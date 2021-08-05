@@ -55,13 +55,6 @@ void MapTool::Draw(HWND hWnd, HDC hdc,int n)
 					Map[i][j].pt.x * sw / 7, Map[i][j].pt.y * sh / 7,
 					sw / 7, sh / 7, Unit::UnitPixel);
 			}
-			else
-			{
-				_stprintf_s(strTest, _countof(strTest),
-					_T("%d %d %d"), Map[i][j].spn, Map[i][j].pt.x, Map[i][j].pt.y);
-				TextOut(hdc, mapx + i * mapw / ROW, mapy + j * maph / COL,
-					strTest, _tcslen(strTest));
-			}
 		}
 	}
 	delete graphic;
@@ -101,6 +94,7 @@ void MapTool::SetTile(POINT pt)
 		Tile t;
 		t.pt = curTile;
 		t.spn = spnum;
+		t.index = 1;
 		Map[curPos.x][curPos.y] = t;
 	}
 }
@@ -126,12 +120,59 @@ void MapTool::SelectTile(POINT pt, int n)
 }
 
 
-void MapTool::LoadMap()
+void MapTool::LoadMap(HWND hWnd, OPENFILENAME OFN)
 {
+	HANDLE hFile;
+	int point = 0;
+
+	memset(&OFN, 0, sizeof(OPENFILENAME)); 
+	OFN.lStructSize = sizeof(OPENFILENAME);
+	OFN.hwndOwner = hWnd;
+	OFN.lpstrFilter = filter;
+	OFN.lpstrFile = lpstrFile;
+	OFN.nMaxFile = 256;
+	OFN.lpstrInitialDir = L"."; 
+	if (GetOpenFileName(&OFN) != 0) {
+		wsprintf(str, L"%s 파일을 여시겠습니까 ?", OFN.lpstrFile);
+		MessageBox(hWnd, str, L"열기 선택", MB_OK);
+	}
+	hFile = CreateFileW(lpstrFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+	ReadFile(hFile, info, sizeT, &sizeT, NULL);
+	for (int i = 0; i < 8; ++i)
+	{
+		for (int j = 0; j < 8; ++j)
+			Map[i][j].index = info[point++] - '0';
+	}
+	CloseHandle(hFile);
 }
 
-void MapTool::SaveMap()
+void MapTool::SaveMap(HWND hWnd, OPENFILENAME OFN, OPENFILENAME SFN)
 {
+	HANDLE hFile;
+	WORD wd = 0xFEFF;
+	int point = 0;
+
+	memset(&OFN, 0, sizeof(OPENFILENAME));  
+	SFN.lStructSize = sizeof(OPENFILENAME);
+	SFN.hwndOwner = hWnd;
+	SFN.lpstrFilter = filter;
+	SFN.lpstrFile = lpstrFile;
+	SFN.nMaxFile = 256;
+	SFN.lpstrInitialDir = L".";
+	if (GetSaveFileName(&SFN) != 0) {
+		wsprintf(str, L"%s 파일에 저장하시겠습니까 ?", SFN.lpstrFile);
+		MessageBox(hWnd, str, L"저장하기 선택", MB_OK);
+	}
+	for (int i = 0; i < ROW; ++i)
+	{
+		for (int j = 0; j < COL; ++j)
+			info[point++] = Map[i][j].index - '0';
+	}
+	hFile = CreateFileW(lpstrFile, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0);
+	
+	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	WriteFile(hFile, info, 2 * lstrlen(info), &c, NULL);
+	CloseHandle(hFile);
 }
 
 bool MapTool::posInMap(POINT pt)
@@ -164,6 +205,7 @@ MapTool::MapTool()
 	spw = 0;
 	spx = 0;
 	spy = 0;
+	spnum = 0;
 
 	for (int i = 0; i < ROW; i++)
 	{
@@ -171,6 +213,7 @@ MapTool::MapTool()
 		{
 			Map[i][j].pt = { 0,0 };
 			Map[i][j].spn = -1;
+			Map[i][j].index = 0;
 		}
 	}
 }
