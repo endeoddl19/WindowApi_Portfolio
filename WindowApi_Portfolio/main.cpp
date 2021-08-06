@@ -3,7 +3,7 @@
 
 #include "framework.h"
 #include "WindowApi_Portfolio.h"
-#include "MapTool.h"
+#include "GameManager.h"
 
 #define MAX_LOADSTRING 100
 #define IDC_MAPTOOL_BTN 1000
@@ -12,6 +12,7 @@
 #define IDC_END_BTN 1003
 #define IDC_TOLEFTSP_BTN 1004
 #define IDC_TORIGHTSP_BTN 1005
+#define IDC_PLAY_BTN 1006
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -22,6 +23,10 @@ RECT rectView;
 ULONG_PTR g_GdiToken;
 HWND    ChildWnd[3];
 MapTool mt;
+GameManager gm;
+Character ch;
+Hero he;
+Enemy en;
 OPENFILENAME OFN, SFN;
 
 void GDI_Init();
@@ -114,8 +119,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    /*HWND hWnd = CreateWindowEx(WS_EX_APPWINDOW, szWindowClass, szTitle, WS_POPUP,
        0, 0, GetSystemMetrics(SM_CXSCREEN)-1, GetSystemMetrics(SM_CYSCREEN)-1,
        nullptr, nullptr, hInstance, nullptr);*/
+   RECT rt = { 0,0,1200,900 };
+   AdjustWindowRect(&rt, WS_OVERLAPPEDWINDOW, NULL);
+
    HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-       0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+       0, 0, rt.right, rt.bottom,
        nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -133,11 +141,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC     hdc;
-    HWND    hBtn;
+    HWND    hBtn[3];
     int w, h;
 
     static HWND hWndClient;
-    CLIENTCREATESTRUCT clientcreate;
+    CLIENTCREATESTRUCT  clientcreate;
     MDICREATESTRUCT     mdicreate;
     HWND hWndChild;
 
@@ -147,7 +155,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetClientRect(hWnd, &rectView);
         w = rectView.right / 5;
         h = rectView.bottom / 7;
-        hBtn = CreateWindow(_T("button"), _T("맵 에디터"),
+        hBtn[0] = CreateWindow(_T("button"), _T("플레이"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            w, h * 5, w, h, hWnd,
+            (HMENU)IDC_PLAY_BTN, hInst, NULL);
+        hBtn[1] = CreateWindow(_T("button"), _T("맵 에디터"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             w * 3, h * 5, w, h, hWnd,
             (HMENU)IDC_MAPTOOL_BTN, hInst, NULL);
@@ -170,6 +182,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             int wmId = LOWORD(wParam);
             switch (wmId)
             {
+            case IDC_PLAY_BTN:
+            {
+                ChildWnd[0] = CreateWindow(
+                    _T("Game Window Class"), NULL, WS_CHILD | WS_VISIBLE,
+                    0, 0, rectView.right, rectView.bottom,
+                    hWnd, NULL, hInst, NULL);
+                return 0;
+            }
             case IDC_MAPTOOL_BTN:
             {
                 /*mdicreate.szClass = _T("MapTool Window Class");
@@ -192,6 +212,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 return 0;
             }
                 break;
+            break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -213,7 +234,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
-        KillTimer(hWnd, 1);
         break;
     }
     return DefFrameProc(hWnd, hWndClient, message, wParam, lParam);
@@ -242,19 +262,56 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc = GetDC(hWnd);
-    int w, h;
+    HWND hBtn[5];
+
+    int     w, h, i, j;
+    static int stage = 1;
+    static int state = 0;
 
     switch (iMsg)
     {
     case WM_CREATE:
         GetClientRect(hWnd, &rectView);
-        w = rectView.right / 20;
-        h = rectView.bottom / 20;
-
+        w = rectView.right / ROW;
+        h = rectView.bottom / COL;
         GDI_Init();
-        SetTimer(hWnd, 1, 32, NULL);
+        gm.SetGame(rectView);
+        en.FindPath();
+        w = rectView.right / 12;
+        h = rectView.bottom / 9;
+
+        hBtn[0] = CreateWindow(_T("button"), _T("HERO 1"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            w * 8, h * 8, w * 2, h, hWnd,
+            (HMENU)IDC_SAVE_BTN, hInst, NULL);
+
+        SetTimer(hWnd, 1, 100, NULL);
+        SetTimer(hWnd, 2, 1000, NULL);
+        SetTimer(hWnd, 3, 100, NULL);
         break;
     case WM_TIMER:
+        if (state == 0)
+        {
+            switch (wParam)
+            {
+            case 1:
+                if (en.getCount() > 0)
+                    en.Move(rectView);
+                break;
+            case 2:
+                en.Create(rectView);
+                break;
+            }
+        }
+        else if (state == 1)
+        {
+            switch (wParam)
+            {
+            case 3:
+
+                break;
+            }
+        }
         InvalidateRect(hWnd, &rectView, false);
         break;
     case WM_COMMAND:
@@ -263,20 +320,25 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         // 메뉴 선택을 구문 분석합니다:
         switch (wmId)
         {
-        
-        
+        case IDC_SAVE_BTN:
+            state = 1;
+            break;
         }
     }
     break;
     case WM_LBUTTONDOWN:
     {
+        if (state == 1)
+            state = 0;
     }
     break;
     case WM_PAINT:
     {
         hdc = BeginPaint(hWnd, &ps);
 
-       
+        gm.Play(hWnd, hdc);
+        en.DrawEnemy(hdc);
+        
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
         EndPaint(hWnd, &ps);
     }
@@ -284,6 +346,8 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         GDI_End();
         KillTimer(hWnd, 1);
+        KillTimer(hWnd, 2);
+        KillTimer(hWnd, 3);
         ReleaseDC(hWnd, hdc);
         PostQuitMessage(0);
         break;

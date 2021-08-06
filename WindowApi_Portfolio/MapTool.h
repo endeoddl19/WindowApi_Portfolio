@@ -39,7 +39,7 @@ private:
 	int spnum;
 public:
 	MapTool();
-	~MapTool() { delete[]imgs; }
+	~MapTool() { if (imgs[0] != nullptr) delete[]imgs; }
 
 	bool posInMap(POINT pt);
 	bool posInSp(POINT pt);

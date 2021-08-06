@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Astar.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameManager.h" />
@@ -148,10 +149,11 @@
     <ClInclude Include="WindowApi_Portfolio.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Astar.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="MapTool.cpp" />
-    <ClCompile Include="WindowApi_Portfolio.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WindowApi_Portfolio.rc" />
