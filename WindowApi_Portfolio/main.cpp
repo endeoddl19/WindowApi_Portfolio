@@ -24,13 +24,11 @@ ULONG_PTR g_GdiToken;
 HWND    ChildWnd[3];
 MapTool mt;
 GameManager gm;
-Character ch;
-Hero he;
-Enemy en;
 OPENFILENAME OFN, SFN;
 
 void GDI_Init();
 void GDI_End();
+void GameStatus(HDC, int, int);
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -264,9 +262,10 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     HDC hdc = GetDC(hWnd);
     HWND hBtn[5];
 
-    int     w, h, i, j;
+    int     w, h, i, j, x, y;
     static int stage = 1;
     static int state = 0;
+    static int coin = 10000;
 
     switch (iMsg)
     {
@@ -276,7 +275,6 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         h = rectView.bottom / COL;
         GDI_Init();
         gm.SetGame(rectView);
-        en.FindPath();
         w = rectView.right / 12;
         h = rectView.bottom / 9;
 
@@ -295,11 +293,11 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             switch (wParam)
             {
             case 1:
-                if (en.getCount() > 0)
-                    en.Move(rectView);
+                if (gm.getEnemCount() > 0)
+                    gm.Update();
                 break;
             case 2:
-                en.Create(rectView);
+                gm.CreateEnemy();
                 break;
             }
         }
@@ -328,8 +326,14 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     break;
     case WM_LBUTTONDOWN:
     {
-        if (state == 1)
+        if (state == 1 && coin > 100)
+        {
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
+            gm.CreateHero({ x, y }, 1);
+            coin -= 100;
             state = 0;
+        }
     }
     break;
     case WM_PAINT:
@@ -337,8 +341,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         hdc = BeginPaint(hWnd, &ps);
 
         gm.Play(hWnd, hdc);
-        en.DrawEnemy(hdc);
-        
+        GameStatus(hdc, stage, coin);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
         EndPaint(hWnd, &ps);
     }
@@ -486,4 +489,16 @@ void GDI_Init()
 void GDI_End()
 {
     GdiplusShutdown(g_GdiToken);
+}
+
+void GameStatus(HDC hdc, int s, int c)
+{
+    TCHAR strTest1[32];
+    _stprintf_s(strTest1, _countof(strTest1), _T("Stage : %d"), s);
+    TextOut(hdc, 10, 10,
+        strTest1, _tcslen(strTest1));
+    TCHAR strTest2[32];
+    _stprintf_s(strTest2, _countof(strTest2), _T("Coin : %d"), c);
+    TextOut(hdc, 10, 30,
+        strTest2, _tcslen(strTest2));
 }

@@ -14,14 +14,11 @@ protected:
 	int hp;
 	int range;
 	int dps;
-	vector<POINT> cpath;
 	POINT curPos;
 public:
-	vector<Character*> characters;
 
-	void Update(const RECT&);
-	void FindPath();
-	virtual void Create(){}
+	void SetInitPos(POINT pt);
+	POINT GetcurPos() { return curPos; }
 	virtual void Deal(){}
 	virtual void Death(){}
 };
@@ -30,14 +27,12 @@ class Hero :public Character
 {
 private:
 	int cost;
-	int chnum;
+	int heronum;
 public:
 	Hero();
 	~Hero() {}
-	vector<Hero*> heros;
 
-	void Create(POINT pt, int chn);
-	void Deal(Hero*);
+	void setHero(int h) { heronum = h; }
 	void Death();
 };
 
@@ -47,20 +42,14 @@ protected:
 	int type;
 	int pathcount = 0;
 	int cnt = 1;
-	POINT respon = {1,0};
-	POINT destin = {7,6};
 	vector<POINT> path;
 public:
 	Enemy();
 	~Enemy() {}
-	vector<Enemy*> enemies;
 
-	//void getSetting();
-	int getCount() { return enemies.size(); }
-	void Create(RECT rt);
+	void setPath(vector<POINT> pa) { path = pa; }
+	bool isArrive();
 	void Move(RECT rt);
-	void DrawEnemy(HDC hdc);
-	void Deal(Enemy*);
 	void Death(int n);
 };
 
