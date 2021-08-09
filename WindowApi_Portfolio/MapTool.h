@@ -53,6 +53,7 @@ public:
 	void DrawCurTile(Graphics* graphic);
 	void SelectTile(POINT pt, int n);
 	void SetTile(POINT pt);
+
 	void LoadMap(HWND hWnd, OPENFILENAME OFN);
 	void SaveMap(HWND hWnd, OPENFILENAME OFN, OPENFILENAME SFN);
 };

@@ -6,24 +6,57 @@ void GameManager::FindPath()
 	//a->setMap();
 	//a->AStar(respon.x, respon.y, destin.x, destin.y);
 	cpath = a->getPath();
-	a->close();
+	//a->close();
 }
 
-void GameManager::DrawEnemy(HDC hdc)
+void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 {
+	POINT pt;
+	Pen pen(Color(255, 0, 0));
+	SolidBrush brush(Color(255, 255, 0, 0));
 	for (int i = 0; i < enems.size(); i++)
 	{
-		POINT pt = enems[i]->GetcurPos();
-		Ellipse(hdc, pt.x - 20, pt.y - 20, pt.x + 20, pt.y + 20);
+		pt = enems[i]->GetcurPos();
+		graphic->DrawEllipse(&pen, pt.x - size, pt.y - size, size * 2, size * 2);
+		graphic->FillEllipse(&brush, pt.x - size, pt.y - size, size * 2, size * 2);
+		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size - 8, 
+			(int)(size * 2 * enems[i]->GetHP()), 3);
+		graphic->FillRectangle(&brush, pt.x - size, pt.y - size - 8, 
+			(int)(size * 2 * enems[i]->GetHP()), 3);
 	}
 }
 
-void GameManager::DrawHero(HDC hdc)
+void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 {
+	POINT pt;
+	Pen pen(Color(0, 0, 255));
+	Pen pen2(Color(255, 0, 0));
+	SolidBrush brush(Color(255, 0, 0, 255));
+	SolidBrush brush2(Color(255, 255, 0, 0));
 	for (int i = 0; i < heros.size(); i++)
 	{
-		POINT pt = heros[i]->GetcurPos();
-		Rectangle(hdc, pt.x - 20, pt.y - 20, pt.x + 20, pt.y + 20);
+		pt = heros[i]->GetcurPos();
+		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size, size * 2, size * 2);
+		graphic->FillRectangle(&brush, pt.x - size, pt.y - size, size * 2, size * 2);
+		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size - 8, 
+			(int)(size * 2 * heros[i]->GetHP()), 3);
+		graphic->FillRectangle(&brush, pt.x - size, pt.y - size - 8, 
+			(int)(size * 2 * heros[i]->GetHP()), 3);
+		pt.x += size * heros[i]->GetDir().x;
+		pt.y += size * heros[i]->GetDir().y;
+		graphic->DrawEllipse(&pen2, pt.x - size - 3, pt.y - size - 3, 6, 6);
+		graphic->FillEllipse(&brush2, pt.x - size - 3, pt.y - size - 3, 6, 6);
+	}
+}
+
+void GameManager::DrawProj(HDC hdc, Graphics* graphic)
+{
+	POINT pt;
+	Pen pen(Color(255, 255, 255));
+	for (int i = 0; i < projs.size(); i++)
+	{
+		pt = projs[i]->GetcurPos();
+		graphic->DrawEllipse(&pen, pt.x - 4, pt.y - 4, 8, 8);
 	}
 }
 
@@ -34,6 +67,19 @@ GameManager::GameManager()
 	size = 20;
 }
 
+GameManager::~GameManager()
+{
+	int i;
+	for (i = 0; i < charcs.size(); i++)
+		delete charcs[i];
+	for (i = 0; i < enems.size(); i++)
+		delete enems[i];
+	for (i = 0; i < heros.size(); i++)
+		delete heros[i];
+	for (i = 0; i < projs.size(); i++)
+		delete projs[i];
+}
+
 void GameManager::SetGame(RECT rt)
 {
 	// 나중에 for문으로 변경
@@ -41,7 +87,7 @@ void GameManager::SetGame(RECT rt)
 	rect = rt;
 	mapw = rt.right - rt.left;
 	maph = (rt.bottom - rt.top) / (COL + 1) * COL;
-	int i, j;
+	//int i, j;
 	/*OPENFILENAME OFN;
 	HANDLE hFile;
 	int point = 0;
@@ -92,8 +138,7 @@ void GameManager::CreateEnemy()
 {
 	Enemy* e = new Enemy;
 	POINT pt;
-	pt.x = respon.x * rect.right / ROW + rect.right / ROW/2;
-	pt.y = respon.y * rect.bottom / COL + rect.bottom / COL/2;
+	pt = ut.ToMapPos(respon, mapw, maph);
 	e->SetInitPos(pt);
 	e->setPath(cpath);
 	enems.push_back(e);
@@ -103,8 +148,11 @@ void GameManager::CreateEnemy()
 void GameManager::CreateHero(POINT pt, int hnum)
 {
 	Hero* h = new Hero;
+	pt = ut.ToTilePos(pt, mapw, maph);
+	pt = ut.ToMapPos(pt, mapw, maph);
 	h->SetInitPos(pt);
 	h->setHero(hnum);
+	h->FindAtkDir(cpath, rect);
 	heros.push_back(h);
 	charcs.push_back(h);
 }
@@ -116,8 +164,21 @@ void GameManager::Update()
 		if (enems[i]->isArrive())
 			enems.erase(enems.begin());
 		else
+		{
 			enems[i]->Move(rect);
+			if (enems[i]->Death())
+				enems.erase(enems.begin() + i);
+		}
 	}
+
+	for (int i = 0; i < projs.size(); i++)
+	{
+		projs[i]->Move(rect);
+		if(projs[i]->Death())
+			projs.erase(projs.begin() + i);
+	}
+
+	Deal();
 }
 
 void GameManager::Play(HWND hWnd, HDC hdc)
@@ -135,8 +196,9 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	Graphics* graphic = new Graphics(memDC);
 
 	graphic->DrawImage(MapImage, 0, 0, mapw, maph);
-	DrawEnemy(memDC);
-	DrawHero(memDC);
+	DrawEnemy(memDC,graphic);
+	DrawHero(memDC, graphic);
+	DrawProj(memDC, graphic);
 
 	delete graphic;
 
@@ -145,6 +207,21 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	DeleteObject(newBit);
 
 	DeleteDC(memDC);
+}
+
+void GameManager::Deal()
+{
+	POINT pt;
+	for (int i = 0; i < heros.size(); i++)
+	{
+		Projectile* p = new Projectile;
+		pt = heros[i]->GetcurPos();
+		pt.x += size * heros[i]->GetDir().x;
+		pt.y += size * heros[i]->GetDir().y;
+		p->SetInitPos(pt);
+		p->setDir(heros[i]->GetDir());
+		projs.push_back(p);
+	}
 }
 
 void GameManager::Clear()

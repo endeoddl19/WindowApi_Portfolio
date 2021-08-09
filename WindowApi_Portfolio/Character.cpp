@@ -6,11 +6,26 @@ void Character::SetInitPos(POINT pt)
 	this->curPos.y = pt.y;
 }
 
-Hero::Hero()
+void Character::FindAtkDir(vector<POINT> pts, RECT rect)
 {
+	POINT pt;
+	pt = ut.ToTilePos(curPos, rect.right, rect.bottom);
+
+	int i = 0;
+	while (i < pts.size() && pts[i].x != pt.x)
+		i++;
+	if (i == pts.size())
+	{
+		i = 0;
+		while (i < pts.size() && pts[i].y != pt.y)
+			i++;
+		(pts[i].x > pt.x) ? dir = { 1,0 } : dir = { -1,0 };
+	}
+	else
+		(pts[i].y > pt.y) ? dir = { 0,1 } : dir = { 0,-1 };
 }
 
-void Hero::Death()
+Hero::Hero()
 {
 }
 
@@ -30,8 +45,8 @@ void Enemy::Move(RECT rt)
 {
 	int w = rt.right;
 	int h = rt.bottom;
-	w /= 8;
-	h /= 9;
+	w /= ROW;
+	h /= COL + 1;
 	int x, y, dx, dy;
 
 	x = path[pathcount].x * w + w / 2;
@@ -53,8 +68,19 @@ void Enemy::Move(RECT rt)
 	}
 }
 
-void Enemy::Death(int n)
+Projectile::Projectile()
 {
-	
 }
 
+void Projectile::Move(RECT rt)
+{
+	int w = rt.right;
+	int h = rt.bottom;
+	h /= COL + 1;
+
+	curPos.x += dir.x * 30;
+	curPos.y += dir.y * 30;
+	if (curPos.x <0 || curPos.x > w ||
+		curPos.y <0 || curPos.y > h * COL)
+		death = true;
+}

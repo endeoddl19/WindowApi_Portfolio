@@ -1,9 +1,10 @@
 #pragma once
-#include "MapTool.h"
-#include "Character.h"
 
 #ifndef _GAMEMANAGER_H_
 #define _GAMEMANAGER_H_
+
+#include "MapTool.h"
+#include "Character.h"
 
 class GameManager
 {
@@ -20,14 +21,17 @@ private:
 	int mapw, maph, size;
 
 	void FindPath();
-	void DrawEnemy(HDC hdc);
-	void DrawHero(HDC hdc);
+	void DrawEnemy(HDC hdc, Graphics* graphic);
+	void DrawHero(HDC hdc, Graphics* graphic);
+	void DrawProj(HDC hdc, Graphics* graphic);
 public:
 	vector<Character*> charcs;
 	vector<Hero*> heros;
 	vector<Enemy*> enems;
+	vector<Projectile*> projs;
 	GameManager();
-	~GameManager(){}
+	~GameManager();
+	Utils ut;
 
 	void SetGame(RECT rt);
 	void CreateEnemy();
@@ -36,6 +40,7 @@ public:
 
 	void Update();
 	void Play(HWND hWnd, HDC hdc);
+	void Deal();
 	void Clear();
 };
 

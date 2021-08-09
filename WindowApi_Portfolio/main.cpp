@@ -262,7 +262,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     HDC hdc = GetDC(hWnd);
     HWND hBtn[5];
 
-    int     w, h, i, j, x, y;
+    int     w, h, x, y;
     static int stage = 1;
     static int state = 0;
     static int coin = 10000;
@@ -367,7 +367,7 @@ LRESULT CALLBACK MapToolWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPar
 
     HWND hBtn[5];
     HBITMAP Btn[5];
-    int     w, h, i, j;
+    int     w, h;
     static int x, y;
     static int spn = 0;
     //static int state = 0;
