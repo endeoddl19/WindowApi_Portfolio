@@ -26,3 +26,20 @@ POINT Utils::ToMapPos(POINT pt, int mapw, int maph)
 	pos.y = pt.y * maph / COL + maph / COL / 2;
 	return pos;
 }
+
+BOOL Utils::inCircleRange(POINT pt1, POINT pt2, int sz)
+{
+	if (sqrt(pow((pt1.x - pt2.x), 2) + pow((pt1.y - pt2.y), 2)) < sz)
+		return true;
+	else
+		return false;
+}
+
+BOOL Utils::inRectRange(POINT pt1, POINT pt2, int sz)
+{
+	if (pt1.x<pt2.x - sz && pt1.x > pt2.x + sz &&
+		pt1.y<pt2.y - sz && pt1.y > pt2.y)
+		return true;
+	else
+		return false;
+}

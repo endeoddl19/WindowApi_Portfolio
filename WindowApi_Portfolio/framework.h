@@ -26,3 +26,12 @@
 
 #define ROW 8
 #define COL 8
+#define SIZE 20
+
+struct GameStatus
+{
+	int wave;
+	int coin;
+	int life;
+	int stage;
+};

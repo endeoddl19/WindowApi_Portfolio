@@ -5,20 +5,22 @@
 
 #include "MapTool.h"
 #include "Character.h"
+#include <gdiplusgraphics.h>
 
 class GameManager
 {
 private:
+	GameStatus gs = { 40, 300, 10, 1 };
 	RECT rect;
 	Image* MapImage;
 	vector<POINT> cpath;
 	POINT respon = { 1,0 };
 	POINT destin = { 7,6 };
 	
-	int wave[4] = { 30,40,50,60 };
+	int cost[3] = { 100,150,200 };
 	int MapInfo[ROW][COL] = { 0 };
 	// 0: 일반 /  1: 길 /  2: 출발 / 3: 도착 / 4: 
-	int mapw, maph, size;
+	int mapw, maph;
 
 	void FindPath();
 	void DrawEnemy(HDC hdc, Graphics* graphic);
@@ -30,18 +32,21 @@ public:
 	vector<Enemy*> enems;
 	vector<Projectile*> projs;
 	GameManager();
-	~GameManager();
+	~GameManager() {}
 	Utils ut;
 
-	void SetGame(RECT rt);
+	GameStatus SetGame(RECT rt);
 	void CreateEnemy();
 	void CreateHero(POINT pt, int hnum);
-	int getEnemCount() { return enems.size(); }
+	int getCost(int hnum) { return cost[hnum]; }
 
 	void Update();
 	void Play(HWND hWnd, HDC hdc);
-	void Deal();
-	void Clear();
+	void Shoot(Hero* hero);
+	BOOL Purchase(int cost);
+	GameStatus CurStatus() { return gs; }
+
+	void close();
 };
 
 #endif

@@ -17,46 +17,73 @@ void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 	for (int i = 0; i < enems.size(); i++)
 	{
 		pt = enems[i]->GetcurPos();
-		graphic->DrawEllipse(&pen, pt.x - size, pt.y - size, size * 2, size * 2);
-		graphic->FillEllipse(&brush, pt.x - size, pt.y - size, size * 2, size * 2);
-		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size - 8, 
-			(int)(size * 2 * enems[i]->GetHP()), 3);
-		graphic->FillRectangle(&brush, pt.x - size, pt.y - size - 8, 
-			(int)(size * 2 * enems[i]->GetHP()), 3);
+		graphic->DrawEllipse(&pen, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+		graphic->FillEllipse(&brush, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+		graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE - 8,
+			(int)(SIZE * 2 * enems[i]->GetHP()), 3);
+		graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE - 8,
+			(int)(SIZE * 2 * enems[i]->GetHP()), 3);
 	}
 }
 
 void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 {
+	int type;
 	POINT pt;
 	Pen pen(Color(0, 0, 255));
-	Pen pen2(Color(255, 0, 0));
+	Pen pen2(Color(0, 0, 0));
 	SolidBrush brush(Color(255, 0, 0, 255));
-	SolidBrush brush2(Color(255, 255, 0, 0));
+	SolidBrush brush2(Color(255, 0, 0, 0));
 	for (int i = 0; i < heros.size(); i++)
 	{
 		pt = heros[i]->GetcurPos();
-		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size, size * 2, size * 2);
-		graphic->FillRectangle(&brush, pt.x - size, pt.y - size, size * 2, size * 2);
-		graphic->DrawRectangle(&pen, pt.x - size, pt.y - size - 8, 
-			(int)(size * 2 * heros[i]->GetHP()), 3);
-		graphic->FillRectangle(&brush, pt.x - size, pt.y - size - 8, 
-			(int)(size * 2 * heros[i]->GetHP()), 3);
-		pt.x += size * heros[i]->GetDir().x;
+		type = heros[i]->getHnum();
+		switch (type)
+		{
+		case 1:
+			graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+			graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+			break;
+		case 2:
+			graphic->DrawRectangle(&pen2, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+			graphic->FillRectangle(&brush2, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
+			break;
+		}
+		graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE - 8,
+			(int)(SIZE * 2 * heros[i]->GetHP()), 3);
+		graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE - 8,
+			(int)(SIZE * 2 * heros[i]->GetHP()), 3);
+		/*pt.x += size * heros[i]->GetDir().x;
 		pt.y += size * heros[i]->GetDir().y;
 		graphic->DrawEllipse(&pen2, pt.x - size - 3, pt.y - size - 3, 6, 6);
-		graphic->FillEllipse(&brush2, pt.x - size - 3, pt.y - size - 3, 6, 6);
+		graphic->FillEllipse(&brush2, pt.x - size - 3, pt.y - size - 3, 6, 6);*/
 	}
 }
 
 void GameManager::DrawProj(HDC hdc, Graphics* graphic)
 {
-	POINT pt;
-	Pen pen(Color(255, 255, 255));
+	int sz;
+	POINT pt, d;
+	Point poly[3];
+	Pen pen(Color(0, 0, 0));
 	for (int i = 0; i < projs.size(); i++)
 	{
 		pt = projs[i]->GetcurPos();
-		graphic->DrawEllipse(&pen, pt.x - 4, pt.y - 4, 8, 8);
+		d = projs[i]->GetDir();
+		sz = projs[i]->getSize();
+		if (d.y == 0)
+		{
+			poly[0] = { pt.x + sz * d.x,pt.y};
+			poly[1] = { pt.x - sz * d.x,pt.y + sz };
+			poly[2] = { pt.x - sz * d.x,pt.y - sz };
+		}
+		else
+		{
+			poly[0] = { pt.x,pt.y + sz * d.y };
+			poly[1] = { pt.x + sz ,pt.y - sz * d.y};
+			poly[2] = { pt.x - sz ,pt.y - sz * d.y};
+		}
+		graphic->DrawPolygon(&pen, poly, 3);
 	}
 }
 
@@ -64,23 +91,9 @@ GameManager::GameManager()
 {
 	mapw = 0;
 	maph = 0;
-	size = 20;
 }
 
-GameManager::~GameManager()
-{
-	int i;
-	for (i = 0; i < charcs.size(); i++)
-		delete charcs[i];
-	for (i = 0; i < enems.size(); i++)
-		delete enems[i];
-	for (i = 0; i < heros.size(); i++)
-		delete heros[i];
-	for (i = 0; i < projs.size(); i++)
-		delete projs[i];
-}
-
-void GameManager::SetGame(RECT rt)
+GameStatus GameManager::SetGame(RECT rt)
 {
 	// 나중에 for문으로 변경
 	MapImage = Image::FromFile((WCHAR*)L"maps/test1.png");
@@ -132,6 +145,7 @@ void GameManager::SetGame(RECT rt)
 	}*/
 
 	FindPath();
+	return gs;
 }
 
 void GameManager::CreateEnemy()
@@ -147,12 +161,12 @@ void GameManager::CreateEnemy()
 
 void GameManager::CreateHero(POINT pt, int hnum)
 {
-	Hero* h = new Hero;
+	Hero* h = new Hero(hnum);
 	pt = ut.ToTilePos(pt, mapw, maph);
 	pt = ut.ToMapPos(pt, mapw, maph);
 	h->SetInitPos(pt);
-	h->setHero(hnum);
 	h->FindAtkDir(cpath, rect);
+	h->setCost(cost[hnum]);
 	heros.push_back(h);
 	charcs.push_back(h);
 }
@@ -163,22 +177,36 @@ void GameManager::Update()
 	{
 		if (enems[i]->isArrive())
 			enems.erase(enems.begin());
-		else
-		{
+		else if (enems[i]->getState() == 1)
 			enems[i]->Move(rect);
-			if (enems[i]->Death())
-				enems.erase(enems.begin() + i);
+		/*else if (enems[i]->getState() == 2)
+			continue;*/
+		if (enems[i]->Death())
+		{
+			enems.erase(enems.begin() + i);
 		}
 	}
 
 	for (int i = 0; i < projs.size(); i++)
 	{
 		projs[i]->Move(rect);
-		if(projs[i]->Death())
+		projs[i]->Collision(enems);
+		if (projs[i]->Death())
+		{
 			projs.erase(projs.begin() + i);
+		}
 	}
 
-	Deal();
+	for (int i = 0; i < heros.size(); i++)
+	{
+		heros[i]->HasTarget(enems);
+		if (heros[i]->getState() == 2)
+			Shoot(heros[i]);
+		if (heros[i]->Death())
+		{
+			heros.erase(heros.begin() + i);
+		}
+	}
 }
 
 void GameManager::Play(HWND hWnd, HDC hdc)
@@ -209,21 +237,41 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	DeleteDC(memDC);
 }
 
-void GameManager::Deal()
+void GameManager::Shoot(Hero* hero)
 {
 	POINT pt;
-	for (int i = 0; i < heros.size(); i++)
+	if (hero->canShoot())
 	{
 		Projectile* p = new Projectile;
-		pt = heros[i]->GetcurPos();
-		pt.x += size * heros[i]->GetDir().x;
-		pt.y += size * heros[i]->GetDir().y;
+		pt = hero->GetcurPos();
+		pt.x += SIZE * hero->GetDir().x;
+		pt.y += SIZE * hero->GetDir().y;
 		p->SetInitPos(pt);
-		p->setDir(heros[i]->GetDir());
+		p->setDir(hero->GetDir());
+		p->setSize(hero->setProjSize());
+		p->setDmg(hero->setProjDmg());
 		projs.push_back(p);
 	}
+	
 }
 
-void GameManager::Clear()
+BOOL GameManager::Purchase(int hnum)
 {
+	if ( cost[hnum] > gs.coin)
+		return false;
+	else
+		return true;
+}
+
+void GameManager::close()
+{
+	int i;
+	for (i = 0; i < charcs.size(); i++)
+		delete charcs[i];
+	for (i = 0; i < enems.size(); i++)
+		delete enems[i];
+	for (i = 0; i < heros.size(); i++)
+		delete heros[i];
+	for (i = 0; i < projs.size(); i++)
+		delete projs[i];
 }
