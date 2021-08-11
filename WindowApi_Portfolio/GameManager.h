@@ -10,22 +10,31 @@
 class GameManager
 {
 private:
-	GameStatus gs = { 40, 300, 10, 1 };
+	GameStatus gs;
 	RECT rect;
 	Image* MapImage;
+	Image* EnemyImage;
+	Image* HeroImage[6];
 	vector<POINT> cpath;
 	POINT respon = { 1,0 };
 	POINT destin = { 7,6 };
-	
-	int cost[3] = { 100,150,200 };
+	BOOL buyAble[6];
+
+	int cost[6] = { 100,150,200,150,200,300 };
 	int MapInfo[ROW][COL] = { 0 };
 	// 0: 일반 /  1: 길 /  2: 출발 / 3: 도착 / 4: 
 	int mapw, maph;
+	int state;
+	// 0: 플레이 / 1: 일시정지
 
 	void FindPath();
 	void DrawEnemy(HDC hdc, Graphics* graphic);
 	void DrawHero(HDC hdc, Graphics* graphic);
 	void DrawProj(HDC hdc, Graphics* graphic);
+	void DrawHpBar(HDC,POINT,FLOAT);
+	void DrawRangeTile(Graphics*);
+	void DrawAdjTile(Graphics*);
+	void DrawBuyableTile(Graphics*);
 public:
 	vector<Character*> charcs;
 	vector<Hero*> heros;
@@ -35,15 +44,16 @@ public:
 	~GameManager() {}
 	Utils ut;
 
-	GameStatus SetGame(RECT rt);
+	void SetGame(RECT rt);
 	void CreateEnemy();
 	void CreateHero(POINT pt, int hnum);
-	int getCost(int hnum) { return cost[hnum]; }
+	void setState(int s) { state = s; }
+	BOOL canCreate(POINT, int);
+	BOOL isBuyable(int hnum) { return buyAble[hnum]; }
 
 	void Update();
 	void Play(HWND hWnd, HDC hdc);
-	void Shoot(Hero* hero);
-	BOOL Purchase(int cost);
+	void Shoot(Character*);
 	GameStatus CurStatus() { return gs; }
 
 	void close();

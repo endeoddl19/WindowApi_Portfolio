@@ -29,7 +29,7 @@ OPENFILENAME OFN, SFN;
 
 void GDI_Init();
 void GDI_End();
-void printGameStatus(HDC, GameStatus);
+void printGameStatus(HDC);
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -85,7 +85,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = WndProc;
-    //wcex.lpfnWndProc    = MapToolWndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
@@ -261,7 +260,6 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc = GetDC(hWnd);
-    HWND hBtn[5];
 
     int     w, h, x, y;
     int     cost;
@@ -275,18 +273,9 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         w = rectView.right / ROW;
         h = rectView.bottom / COL;
         GDI_Init();
-        gs = gm.SetGame(rectView);
+        gm.SetGame(rectView);
         w = rectView.right / 12;
         h = rectView.bottom / 9;
-
-        hBtn[0] = CreateWindow(_T("button"), _T("HERO 1"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 6, h * 8, w * 2, h, hWnd,
-            (HMENU)IDC_SAVE_BTN, hInst, NULL);
-        hBtn[1] = CreateWindow(_T("button"), _T("HERO 2"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 8, h * 8, w * 2, h, hWnd,
-            (HMENU)IDC_END_BTN, hInst, NULL);
 
         SetTimer(hWnd, 1, 32, NULL);
         SetTimer(hWnd, 2, 2000, NULL);
@@ -311,7 +300,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             switch (wParam)
             {
             case 3:
-
+                
                 break;
             }
         }
@@ -323,27 +312,29 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         // 메뉴 선택을 구문 분석합니다:
         switch (wmId)
         {
-        case IDC_SAVE_BTN:
-            state = 1;
-            hnum = 1;
-            break;
-        case IDC_END_BTN:
-            state = 1;
-            hnum = 2;
-            break;
         }
+
     }
     break;
     case WM_LBUTTONDOWN:
     {
-        // 가격 어떻게 받아올지
-        if (state == 1 && gm.Purchase(hnum))
+        x = LOWORD(lParam);
+        y = HIWORD(lParam);
+        if (state == 0)
         {
-            x = LOWORD(lParam);
-            y = HIWORD(lParam);
+            if (x < rectView.right / 2)
+                gm.setState(1);
+            else
+                gm.setState(2);
+            hnum = (x / (rectView.right / 6));
+
+            state = 1;
+        }
+        else if (state == 1 && gm.isBuyable(hnum))
+        {
             gm.CreateHero({ x, y }, hnum);
-            gs.coin -= gm.getCost(hnum);
             state = 0;
+            gm.setState(0);
         }
     }
     break;
@@ -352,7 +343,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         hdc = BeginPaint(hWnd, &ps);
 
         gm.Play(hWnd, hdc);
-        printGameStatus(hdc, gs);
+        printGameStatus(hdc);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
         EndPaint(hWnd, &ps);
     }
@@ -502,22 +493,17 @@ void GDI_End()
     GdiplusShutdown(g_GdiToken);
 }
 
-void printGameStatus(HDC hdc, GameStatus gs)
+void printGameStatus(HDC hdc)
 {
-    TCHAR strTest1[32];
-    _stprintf_s(strTest1, _countof(strTest1), _T("Stage : %d"), gs.stage);
-    TextOut(hdc, 10, 10,
-        strTest1, _tcslen(strTest1));
-    TCHAR strTest2[32];
-    _stprintf_s(strTest2, _countof(strTest2), _T("Coin : %d"), gs.coin);
-    TextOut(hdc, 10, 30,
-        strTest2, _tcslen(strTest2));
-    /*TCHAR strTest3[32];
-    _stprintf_s(strTest3, _countof(strTest3), _T("Life : %d"), gs.life);
-    TextOut(hdc, 10, 50,
-        strTest3, _tcslen(strTest3));*/
-    TCHAR strTest4[32];
-    _stprintf_s(strTest4, _countof(strTest4), _T("Wave : %d"), gs.wave);
-    TextOut(hdc, rectView.right / 2, 10,
-        strTest4, _tcslen(strTest4));
+    gs = gm.CurStatus();
+
+    TCHAR strTest[32];
+    _stprintf_s(strTest, _countof(strTest), _T("Stage : %d"), gs.stage);
+    TextOut(hdc, 10, 10, strTest, _tcslen(strTest));
+    _stprintf_s(strTest, _countof(strTest), _T("Coin : %d"), gs.coin);
+    TextOut(hdc, 10, 30, strTest, _tcslen(strTest));
+    _stprintf_s(strTest, _countof(strTest), _T("Life : %d"), gs.life);
+    TextOut(hdc, 10, 50, strTest, _tcslen(strTest));
+    _stprintf_s(strTest, _countof(strTest), _T("Wave : %d"), gs.wave);
+    TextOut(hdc, rectView.right / 2, 10, strTest, _tcslen(strTest));
 }

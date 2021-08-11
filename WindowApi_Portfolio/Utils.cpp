@@ -29,7 +29,7 @@ POINT Utils::ToMapPos(POINT pt, int mapw, int maph)
 
 BOOL Utils::inCircleRange(POINT pt1, POINT pt2, int sz)
 {
-	if (sqrt(pow((pt1.x - pt2.x), 2) + pow((pt1.y - pt2.y), 2)) < sz)
+	if (PointDistance(pt1,pt2) < sz)
 		return true;
 	else
 		return false;
@@ -42,4 +42,9 @@ BOOL Utils::inRectRange(POINT pt1, POINT pt2, int sz)
 		return true;
 	else
 		return false;
+}
+
+int Utils::PointDistance(POINT pt1, POINT pt2)
+{
+	return sqrt(pow((pt1.x - pt2.x), 2) + pow((pt1.y - pt2.y), 2));
 }

@@ -17,90 +17,126 @@ void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 	for (int i = 0; i < enems.size(); i++)
 	{
 		pt = enems[i]->GetcurPos();
-		graphic->DrawEllipse(&pen, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-		graphic->FillEllipse(&brush, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-		graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE - 8,
-			(int)(SIZE * 2 * enems[i]->GetHP()), 3);
-		graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE - 8,
-			(int)(SIZE * 2 * enems[i]->GetHP()), 3);
+		graphic->DrawImage(EnemyImage, Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
+			mapw / ROW, maph / COL),
+			0, 0, 50, 50, Unit::UnitPixel);
+
+		DrawHpBar(hdc, pt, enems[i]->GetHP());
 	}
 }
 
 void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 {
-	int type;
 	POINT pt;
-	Pen pen(Color(0, 0, 255));
-	Pen pen2(Color(0, 0, 0));
-	SolidBrush brush(Color(255, 0, 0, 255));
-	SolidBrush brush2(Color(255, 0, 0, 0));
 	for (int i = 0; i < heros.size(); i++)
 	{
 		pt = heros[i]->GetcurPos();
-		type = heros[i]->getHnum();
-		switch (type)
-		{
-		case 1:
-			graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-			graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-			break;
-		case 2:
-			graphic->DrawRectangle(&pen2, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-			graphic->FillRectangle(&brush2, pt.x - SIZE, pt.y - SIZE, SIZE * 2, SIZE * 2);
-			break;
-		}
-		graphic->DrawRectangle(&pen, pt.x - SIZE, pt.y - SIZE - 8,
-			(int)(SIZE * 2 * heros[i]->GetHP()), 3);
-		graphic->FillRectangle(&brush, pt.x - SIZE, pt.y - SIZE - 8,
-			(int)(SIZE * 2 * heros[i]->GetHP()), 3);
-		/*pt.x += size * heros[i]->GetDir().x;
-		pt.y += size * heros[i]->GetDir().y;
-		graphic->DrawEllipse(&pen2, pt.x - size - 3, pt.y - size - 3, 6, 6);
-		graphic->FillEllipse(&brush2, pt.x - size - 3, pt.y - size - 3, 6, 6);*/
+		graphic->DrawImage(HeroImage[heros[i]->getHnum()],
+			Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL/ 2,
+				mapw / ROW, maph / COL),
+			0, 0, 200, 200, Unit::UnitPixel);
+		DrawHpBar(hdc, pt, heros[i]->GetHP());
+	}
+	Rectangle(hdc, 0, maph, mapw, rect.bottom);
+	for (int i = 0; i < 6; i++)
+	{
+		graphic->DrawImage(HeroImage[i],
+			Rect(i * mapw / 6, maph, mapw / 6, maph / COL),
+			0, 0, 200, 200, Unit::UnitPixel);
 	}
 }
 
 void GameManager::DrawProj(HDC hdc, Graphics* graphic)
 {
 	int sz;
-	POINT pt, d;
-	Point poly[3];
-	Pen pen(Color(0, 0, 0));
+	POINT pt;
 	for (int i = 0; i < projs.size(); i++)
 	{
 		pt = projs[i]->GetcurPos();
-		d = projs[i]->GetDir();
 		sz = projs[i]->getSize();
-		if (d.y == 0)
+		if (sz != 1)
+			Ellipse(hdc, pt.x - sz, pt.y - sz, pt.x + sz, pt.y + sz);
+	}
+}
+
+void GameManager::DrawHpBar(HDC hdc, POINT pt, FLOAT hp)
+{
+	int w = mapw / ROW / 2 * hp;
+	Rectangle(hdc, pt.x - mapw / ROW / 4, pt.y - maph / (COL + 1) / 2 + 5, 
+		pt.x - mapw / ROW / 4 + w, pt.y - maph / (COL + 1) / 2);
+}
+
+void GameManager::DrawRangeTile(Graphics* graphic)
+{
+	SolidBrush brush(Color(125, 255, 0, 0));
+	SolidBrush brush2(Color(0, 255, 0, 0));
+
+	for (int i = 0; i < ROW; i++)
+	{
+		for (int j = 0; j < COL; j++)
 		{
-			poly[0] = { pt.x + sz * d.x,pt.y};
-			poly[1] = { pt.x - sz * d.x,pt.y + sz };
-			poly[2] = { pt.x - sz * d.x,pt.y - sz };
+			if (MapInfo[i][j] == 0)
+				graphic->FillRectangle(&brush2, i * mapw / ROW, j * maph / COL,
+					mapw / ROW, maph / COL);
+			else
+				graphic->FillRectangle(&brush, i * mapw / ROW, j * maph / COL,
+					mapw / ROW, maph / COL);
 		}
-		else
+	}
+}
+
+void GameManager::DrawAdjTile(Graphics* graphic)
+{
+	SolidBrush brush(Color(125, 255, 0, 0));
+	SolidBrush brush2(Color(0, 255, 0, 0));
+
+	for (int i = 0; i < ROW; i++)
+	{
+		for (int j = 0; j < COL; j++)
 		{
-			poly[0] = { pt.x,pt.y + sz * d.y };
-			poly[1] = { pt.x + sz ,pt.y - sz * d.y};
-			poly[2] = { pt.x - sz ,pt.y - sz * d.y};
+			if(MapInfo[i][j] == 1)
+				graphic->FillRectangle(&brush2, i * mapw / ROW, j * maph / COL,
+					mapw / ROW, maph / COL);
+			else
+				graphic->FillRectangle(&brush, i * mapw / ROW, j * maph / COL,
+					mapw / ROW, maph / COL);
 		}
-		graphic->DrawPolygon(&pen, poly, 3);
+	}
+}
+
+void GameManager::DrawBuyableTile(Graphics* graphic)
+{
+	SolidBrush brush(Color(150, 70, 70, 70));
+	for (int i = 0; i < 6; i++)
+	{
+		if (buyAble[i] == false)
+			graphic->FillRectangle(&brush, i * mapw / 6, maph,
+				mapw / 6, maph / COL);
 	}
 }
 
 GameManager::GameManager()
 {
+	gs = { 40, 300, 10, 1 };
 	mapw = 0;
 	maph = 0;
 }
 
-GameStatus GameManager::SetGame(RECT rt)
+void GameManager::SetGame(RECT rt)
 {
 	// 나중에 for문으로 변경
 	MapImage = Image::FromFile((WCHAR*)L"maps/test1.png");
+	EnemyImage = Image::FromFile((WCHAR*)L"images/Enemy1.png");
+	HeroImage[0] = Image::FromFile((WCHAR*)L"images/Khan.png");
+	HeroImage[1] = Image::FromFile((WCHAR*)L"images/Chandra.png");
+	HeroImage[2] = Image::FromFile((WCHAR*)L"images/Meh.png");
+	HeroImage[3] = Image::FromFile((WCHAR*)L"images/Guan.png");
+	HeroImage[4] = Image::FromFile((WCHAR*)L"images/Alex.png");
+	HeroImage[5] = Image::FromFile((WCHAR*)L"images/YSS.png");
 	rect = rt;
 	mapw = rt.right - rt.left;
 	maph = (rt.bottom - rt.top) / (COL + 1) * COL;
-	//int i, j;
+	int i, j;
 	/*OPENFILENAME OFN;
 	HANDLE hFile;
 	int point = 0;
@@ -145,7 +181,17 @@ GameStatus GameManager::SetGame(RECT rt)
 	}*/
 
 	FindPath();
-	return gs;
+
+	for (i = 0; i < cpath.size(); i++)
+		MapInfo[cpath[i].x][cpath[i].y] = 1;
+
+	for (i = 0; i < 6; i++)
+	{
+		if (cost[i] > gs.coin)
+			buyAble[i] = false;
+		else
+			buyAble[i] = true;
+	}
 }
 
 void GameManager::CreateEnemy()
@@ -163,31 +209,57 @@ void GameManager::CreateHero(POINT pt, int hnum)
 {
 	Hero* h = new Hero(hnum);
 	pt = ut.ToTilePos(pt, mapw, maph);
+	MapInfo[pt.x][pt.y] = 2;
 	pt = ut.ToMapPos(pt, mapw, maph);
 	h->SetInitPos(pt);
 	h->FindAtkDir(cpath, rect);
 	h->setCost(cost[hnum]);
 	heros.push_back(h);
 	charcs.push_back(h);
+	gs.coin -= cost[hnum];
+}
+
+BOOL GameManager::canCreate(POINT pt, int hnum)
+{
+	if (hnum > 3)
+	{
+		if (MapInfo[pt.x][pt.y] == 1)
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		if(MapInfo[pt.x][pt.y] == 0)
+			return true;
+		else
+			return false;
+	}
 }
 
 void GameManager::Update()
 {
-	for (int i = 0; i < enems.size(); i++)
+	int i;
+	for (i = 0; i < enems.size(); i++)
 	{
 		if (enems[i]->isArrive())
+		{
 			enems.erase(enems.begin());
-		else if (enems[i]->getState() == 1)
+			gs.life--;
+		}
+		enems[i]->Collision(heros);
+		if (enems[i]->getState() == 1)
 			enems[i]->Move(rect);
-		/*else if (enems[i]->getState() == 2)
-			continue;*/
+		else if (enems[i]->getState() == 2)
+			Shoot(enems[i]);
 		if (enems[i]->Death())
 		{
 			enems.erase(enems.begin() + i);
+			gs.coin += 5;
 		}
 	}
 
-	for (int i = 0; i < projs.size(); i++)
+	for (i = 0; i < projs.size(); i++)
 	{
 		projs[i]->Move(rect);
 		projs[i]->Collision(enems);
@@ -197,15 +269,23 @@ void GameManager::Update()
 		}
 	}
 
-	for (int i = 0; i < heros.size(); i++)
+	for (i = 0; i < heros.size(); i++)
 	{
-		heros[i]->HasTarget(enems);
+		heros[i]->Target(enems, rect);
 		if (heros[i]->getState() == 2)
 			Shoot(heros[i]);
 		if (heros[i]->Death())
 		{
 			heros.erase(heros.begin() + i);
 		}
+	}
+
+	for (i = 0; i < 6; i++)
+	{
+		if (cost[i] > gs.coin)
+			buyAble[i] = false;
+		else
+			buyAble[i] = true;
 	}
 }
 
@@ -227,6 +307,11 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	DrawEnemy(memDC,graphic);
 	DrawHero(memDC, graphic);
 	DrawProj(memDC, graphic);
+	DrawBuyableTile(graphic);
+	if (state == 1)
+		DrawRangeTile(graphic);
+	else if(state == 2)
+		DrawAdjTile(graphic);
 
 	delete graphic;
 
@@ -237,30 +322,20 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	DeleteDC(memDC);
 }
 
-void GameManager::Shoot(Hero* hero)
+void GameManager::Shoot(Character* charac)
 {
 	POINT pt;
-	if (hero->canShoot())
+	if (charac->canShoot())
 	{
 		Projectile* p = new Projectile;
-		pt = hero->GetcurPos();
-		pt.x += SIZE * hero->GetDir().x;
-		pt.y += SIZE * hero->GetDir().y;
-		p->SetInitPos(pt);
-		p->setDir(hero->GetDir());
-		p->setSize(hero->setProjSize());
-		p->setDmg(hero->setProjDmg());
+		pt = charac->GetcurPos();
+		pt.x += charac->GetDir().x/ROW;
+		pt.y += charac->GetDir().y/COL;
+		p->setProj(pt, charac->GetDir(), charac->setProjSize(),
+			charac->setProjDmg(), charac->getRange());
 		projs.push_back(p);
 	}
 	
-}
-
-BOOL GameManager::Purchase(int hnum)
-{
-	if ( cost[hnum] > gs.coin)
-		return false;
-	else
-		return true;
 }
 
 void GameManager::close()

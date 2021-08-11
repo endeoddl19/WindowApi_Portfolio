@@ -6,7 +6,9 @@
 #include "Astar.h"
 #include "Utils.h"
 #include <algorithm>
+class Hero;
 class Enemy;
+class Projectile;
 
 class Character
 {
@@ -22,6 +24,7 @@ protected:
 	int atkspd;
 	int dmg;
 	int cnt = 1;
+	int projsize;
 	int state;
 	// 0: idle / 1: move / 2: attack
 	bool death = false;
@@ -30,63 +33,67 @@ public:
 
 	void SetInitPos(POINT pt);
 	POINT GetcurPos() { return curPos; }
-	void FindAtkDir(vector<POINT> pts, RECT rect);
 	POINT GetDir() { return dir; }
 	FLOAT GetHP() { return (hp / maxhp); }
 	FLOAT GetCurHP() { return hp; }
+	int setProjSize() { return projsize; }
+	int setProjDmg() { return dmg; }
+	int getState() { return state; }
+	int getRange() { return range; }
+
+	void FindAtkDir(vector<POINT> pts, RECT rect);
 	void Damaged(FLOAT d) { hp -= d; }
 	void Die() { death = true; }
 	BOOL Death() { return death; }
-	int getState() { return state; }
+	BOOL canShoot();
+	
 };
 
 class Hero :public Character
 {
 private:
 	int cost;
-	int projsize;
 	int heronum;
 public:
 	Hero(int hnum);
 	~Hero() {}
 
-	BOOL canShoot();
-	void HasTarget(vector<Enemy*>);
+	void Collision(vector<Enemy*>);
+	void Target(vector<Enemy*>, RECT);
 	void setCost(int c) { cost = c; }
-	int setProjSize() { return projsize; }
-	int setProjDmg() { return dmg; }
 	int getHnum() { return heronum; }
 };
 
 class Enemy :public Character
 {
-protected:
-	int type;
+private:
 	int pathcount = 0;
 	vector<POINT> path;
+	POINT moving;
 public:
 	Enemy();
 	~Enemy() {}
 
+	void Collision(vector<Hero*>);
 	void setPath(vector<POINT> pa) { path = pa; }
+	POINT getMoving() { return path[pathcount + 1]; }
 	bool isArrive();
 	void Move(RECT rt);
 };
 
 class Projectile :public Character
 {
-protected:
+private:
 	int size;
+	POINT init;
 public:
 	Projectile();
 	~Projectile() {}
 
-	void setDir(POINT pt) { dir = pt; }
-	void setSize(int s) { size = s; }
-	void setDmg(int d) { dmg = d; }
+	void setProj(POINT, POINT, int, int, int);
+	void Collision(vector<Enemy*>);
 	int getSize() { return size; }
 	void Move(RECT rt);
-	void Collision(vector<Enemy*>);
 };
 
 #endif

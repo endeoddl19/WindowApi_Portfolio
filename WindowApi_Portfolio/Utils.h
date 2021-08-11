@@ -12,6 +12,7 @@ public:
 	POINT ToMapPos(POINT pt, int mapw, int maph);
 	BOOL inCircleRange(POINT pt1, POINT pt2, int sz);
 	BOOL inRectRange(POINT pt1, POINT pt2, int sz);
+	int PointDistance(POINT pt1, POINT pt2);
 };
 
 #endif

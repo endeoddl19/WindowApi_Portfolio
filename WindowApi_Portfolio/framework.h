@@ -26,7 +26,7 @@
 
 #define ROW 8
 #define COL 8
-#define SIZE 20
+#define SIZE 25
 
 struct GameStatus
 {
