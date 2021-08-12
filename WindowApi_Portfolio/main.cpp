@@ -278,7 +278,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         h = rectView.bottom / 9;
 
         SetTimer(hWnd, 1, 32, NULL);
-        SetTimer(hWnd, 2, 2000, NULL);
+        SetTimer(hWnd, 2, 3000, NULL);
         SetTimer(hWnd, 3, 100, NULL);
         break;
     case WM_TIMER:
@@ -291,7 +291,6 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 break;
             case 2:
                 gm.CreateEnemy();
-                gs.wave--;
                 break;
             }
         }
@@ -320,7 +319,7 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     {
         x = LOWORD(lParam);
         y = HIWORD(lParam);
-        if (state == 0)
+        if (y > rectView.bottom / (COL + 1) * COL)
         {
             if (x < rectView.right / 2)
                 gm.setState(1);
@@ -330,14 +329,23 @@ LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
             state = 1;
         }
-        else if (state == 1 && gm.isBuyable(hnum))
+        else if (state == 1 && gm.isBuyable(hnum) && y <rectView.bottom/(COL+1)*COL)
         {
             gm.CreateHero({ x, y }, hnum);
             state = 0;
             gm.setState(0);
         }
     }
-    break;
+    /*case WM_CHAR:
+        switch (wParam)
+        {
+        case '1':
+            gm.setState(1);
+            hnum = 0;
+            state = 1;
+            break;
+        }
+        break;*/
     case WM_PAINT:
     {
         hdc = BeginPaint(hWnd, &ps);

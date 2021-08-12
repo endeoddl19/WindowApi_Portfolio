@@ -6,15 +6,9 @@
 #include "Astar.h"
 #include "Utils.h"
 #include <algorithm>
-class Hero;
-class Enemy;
-class Projectile;
 
-class Character
+struct CharStat
 {
-private:
-	RECT rt;
-protected:
 	POINT dir;
 	POINT curPos;
 	FLOAT maxhp;
@@ -23,77 +17,56 @@ protected:
 	int range;
 	int atkspd;
 	int dmg;
-	int cnt = 1;
+	int cnt;
 	int projsize;
 	int state;
-	// 0: idle / 1: move / 2: attack
+	// 0: 정지 / 1: 움직임 / 2: 공격 / 3: 죽는중
 	bool death = false;
-public:
-	Utils ut;
-
-	void SetInitPos(POINT pt);
-	POINT GetcurPos() { return curPos; }
-	POINT GetDir() { return dir; }
-	FLOAT GetHP() { return (hp / maxhp); }
-	FLOAT GetCurHP() { return hp; }
-	int setProjSize() { return projsize; }
-	int setProjDmg() { return dmg; }
-	int getState() { return state; }
-	int getRange() { return range; }
-
-	void FindAtkDir(vector<POINT> pts, RECT rect);
-	void Damaged(FLOAT d) { hp -= d; }
-	void Die() { death = true; }
-	BOOL Death() { return death; }
-	BOOL canShoot();
+};
+struct Hero
+{
+	CharStat cs;
+	int cost;
+	int heronum; 
 	
 };
-
-class Hero :public Character
+struct Enemy
 {
-private:
-	int cost;
-	int heronum;
-public:
-	Hero(int hnum);
-	~Hero() {}
-
-	void Collision(vector<Enemy*>);
-	void Target(vector<Enemy*>, RECT);
-	void setCost(int c) { cost = c; }
-	int getHnum() { return heronum; }
-};
-
-class Enemy :public Character
-{
-private:
+	CharStat cs;
+	int movecnt;
 	int pathcount = 0;
 	vector<POINT> path;
 	POINT moving;
-public:
-	Enemy();
-	~Enemy() {}
-
-	void Collision(vector<Hero*>);
-	void setPath(vector<POINT> pa) { path = pa; }
-	POINT getMoving() { return path[pathcount + 1]; }
-	bool isArrive();
-	void Move(RECT rt);
+	POINT curDir;
+};
+struct Projectile
+{
+	CharStat cs;
+	int pnum;
+	POINT init;
 };
 
-class Projectile :public Character
+class Character
 {
 private:
-	int size;
-	POINT init;
+	RECT rt;
 public:
-	Projectile();
-	~Projectile() {}
+	Utils ut;
 
-	void setProj(POINT, POINT, int, int, int);
-	void Collision(vector<Enemy*>);
-	int getSize() { return size; }
-	void Move(RECT rt);
+	FLOAT GetHP(Hero* h) { return (h->cs.hp / h->cs.maxhp); }
+	FLOAT GetHP(Enemy* e) { return (e->cs.hp / e->cs.maxhp); }
+	int getAtk(Hero* h) { return h->cs.atkspd / 5 / h->cs.cnt; }
+	int getAtk(Enemy* e) { return e->cs.atkspd / 5 / e->cs.cnt; }
+
+	void Target(Hero*, vector<Enemy*>, RECT);
+	void FindAtkDir(Hero*, vector<POINT> pts, RECT rect);
+	void Damaged(Hero* h, FLOAT d) { h->cs.hp -= d; }
+	void Damaged(Enemy* e, FLOAT d) { e->cs.hp -= d; }
+	BOOL AttackAble(Hero*);
+	BOOL AttackAble(Enemy*);
+	void Move(Enemy*, RECT);
+	void Move(Projectile* , RECT);
+	bool isArrive(Enemy*);
 };
 
 #endif

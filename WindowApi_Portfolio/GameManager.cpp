@@ -11,15 +11,25 @@ void GameManager::FindPath()
 
 void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 {
-	POINT pt;
+	int d;
+	POINT pt, dir;
 	Pen pen(Color(255, 0, 0));
 	SolidBrush brush(Color(255, 255, 0, 0));
 	for (int i = 0; i < enems.size(); i++)
 	{
-		pt = enems[i]->GetcurPos();
-		graphic->DrawImage(EnemyImage, Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
-			mapw / ROW, maph / COL),
-			0, 0, 50, 50, Unit::UnitPixel);
+		pt = enems[i]->cs.curPos;
+		dir = enems[i]->curDir;
+		if (dir.x == 1)
+			d = 1;
+		else d = 0;
+		if (enems[i]->cs.state == 1)
+			graphic->DrawImage(EnemyImage[d], Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
+				mapw / ROW, maph / COL),
+				0, 0, 48, 48, Unit::UnitPixel);
+		else if (enems[i]->cs.state == 2)
+			graphic->DrawImage(EnemyImage[d + 2], Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
+				mapw / ROW, maph / COL),
+				enems[i]->getAtk() * 48, 0, 48, 48, Unit::UnitPixel);
 
 		DrawHpBar(hdc, pt, enems[i]->GetHP());
 	}
@@ -30,8 +40,8 @@ void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 	POINT pt;
 	for (int i = 0; i < heros.size(); i++)
 	{
-		pt = heros[i]->GetcurPos();
-		graphic->DrawImage(HeroImage[heros[i]->getHnum()],
+		pt = heros[i]->cs.curPos;
+		graphic->DrawImage(HeroImage[heros[i]->heronum],
 			Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL/ 2,
 				mapw / ROW, maph / COL),
 			0, 0, 200, 200, Unit::UnitPixel);
@@ -40,30 +50,28 @@ void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 	Rectangle(hdc, 0, maph, mapw, rect.bottom);
 	for (int i = 0; i < 6; i++)
 	{
-		graphic->DrawImage(HeroImage[i],
-			Rect(i * mapw / 6, maph, mapw / 6, maph / COL),
+		graphic->DrawImage(HeroBackImage[i],
+			Rect(i * mapw / 6, maph, mapw / 6, rect.bottom/WCOL*2),
 			0, 0, 200, 200, Unit::UnitPixel);
 	}
 }
 
 void GameManager::DrawProj(HDC hdc, Graphics* graphic)
 {
-	int sz;
+	int pnum;
 	POINT pt;
 	for (int i = 0; i < projs.size(); i++)
 	{
-		pt = projs[i]->GetcurPos();
-		sz = projs[i]->getSize();
-		if (sz != 1)
-			Ellipse(hdc, pt.x - sz, pt.y - sz, pt.x + sz, pt.y + sz);
+		pt = projs[i];
+		
 	}
 }
 
 void GameManager::DrawHpBar(HDC hdc, POINT pt, FLOAT hp)
 {
 	int w = mapw / ROW / 2 * hp;
-	Rectangle(hdc, pt.x - mapw / ROW / 4, pt.y - maph / (COL + 1) / 2 + 5, 
-		pt.x - mapw / ROW / 4 + w, pt.y - maph / (COL + 1) / 2);
+	Rectangle(hdc, pt.x - mapw / ROW / 4, pt.y - maph / (WCOL) / 2 + 5, 
+		pt.x - mapw / ROW / 4 + w, pt.y - maph / (WCOL) / 2);
 }
 
 void GameManager::DrawRangeTile(Graphics* graphic)
@@ -106,12 +114,12 @@ void GameManager::DrawAdjTile(Graphics* graphic)
 
 void GameManager::DrawBuyableTile(Graphics* graphic)
 {
-	SolidBrush brush(Color(150, 70, 70, 70));
+	SolidBrush brush(Color(150, 40, 40, 40));
 	for (int i = 0; i < 6; i++)
 	{
 		if (buyAble[i] == false)
 			graphic->FillRectangle(&brush, i * mapw / 6, maph,
-				mapw / 6, maph / COL);
+				mapw / 6, rect.bottom / WCOL * 2 + 8);
 	}
 }
 
@@ -126,16 +134,27 @@ void GameManager::SetGame(RECT rt)
 {
 	// 나중에 for문으로 변경
 	MapImage = Image::FromFile((WCHAR*)L"maps/test1.png");
-	EnemyImage = Image::FromFile((WCHAR*)L"images/Enemy1.png");
+	EnemyImage[0] = Image::FromFile((WCHAR*)L"images/EnemyLeft.png");
+	EnemyImage[1] = Image::FromFile((WCHAR*)L"images/EnemyRight.png");
+	EnemyImage[2] = Image::FromFile((WCHAR*)L"images/EnemyAtkLeft.png");
+	EnemyImage[3] = Image::FromFile((WCHAR*)L"images/EnemyAtkRight.png");
+	EnemyImage[4] = Image::FromFile((WCHAR*)L"images/EnemyDeadLeft.png");
+	EnemyImage[5] = Image::FromFile((WCHAR*)L"images/EnemyDeadRight.png");
 	HeroImage[0] = Image::FromFile((WCHAR*)L"images/Khan.png");
-	HeroImage[1] = Image::FromFile((WCHAR*)L"images/Chandra.png");
+	HeroImage[1] = Image::FromFile((WCHAR*)L"images/Ram.png");
 	HeroImage[2] = Image::FromFile((WCHAR*)L"images/Meh.png");
 	HeroImage[3] = Image::FromFile((WCHAR*)L"images/Guan.png");
-	HeroImage[4] = Image::FromFile((WCHAR*)L"images/Alex.png");
+	HeroImage[4] = Image::FromFile((WCHAR*)L"images/Leo.png");
 	HeroImage[5] = Image::FromFile((WCHAR*)L"images/YSS.png");
+	HeroBackImage[0] = Image::FromFile((WCHAR*)L"images/Khan.png");
+	HeroBackImage[1] = Image::FromFile((WCHAR*)L"images/Ram_Back.png");
+	HeroBackImage[2] = Image::FromFile((WCHAR*)L"images/Meh_Back2.png");
+	HeroBackImage[3] = Image::FromFile((WCHAR*)L"images/Guan.png");
+	HeroBackImage[4] = Image::FromFile((WCHAR*)L"images/Leo_Back.png");
+	HeroBackImage[5] = Image::FromFile((WCHAR*)L"images/YSS.png");
 	rect = rt;
 	mapw = rt.right - rt.left;
-	maph = (rt.bottom - rt.top) / (COL + 1) * COL;
+	maph = (rt.bottom - rt.top) / (WCOL) * COL;
 	int i, j;
 	/*OPENFILENAME OFN;
 	HANDLE hFile;
@@ -156,18 +175,6 @@ void GameManager::SetGame(RECT rt)
 			MapInfo[i][j] = info[point++] - '0';
 	}
 	CloseHandle(hFile);*/
-
-	/*std::ifstream fin("maps/test1.txt", std::ios::in);
-
-	int* score;
-
-	for (i = 0; i < 8; ++i)
-	{
-		for (j = 0; j < 8; ++j)
-			fin.read((char*)&MapInfo[i][j],sizeof(int));
-	}
-
-	fin.close();*/
 
 	/*for (int i = 0; i < 8; i++)
 	{
@@ -203,6 +210,7 @@ void GameManager::CreateEnemy()
 	e->setPath(cpath);
 	enems.push_back(e);
 	charcs.push_back(e);
+	gs.wave--;
 }
 
 void GameManager::CreateHero(POINT pt, int hnum)
@@ -219,7 +227,7 @@ void GameManager::CreateHero(POINT pt, int hnum)
 	gs.coin -= cost[hnum];
 }
 
-BOOL GameManager::canCreate(POINT pt, int hnum)
+BOOL GameManager::CreatAble(POINT pt, int hnum)
 {
 	if (hnum > 3)
 	{
@@ -244,39 +252,43 @@ void GameManager::Update()
 	{
 		if (enems[i]->isArrive())
 		{
-			enems.erase(enems.begin());
-			gs.life--;
-		}
-		enems[i]->Collision(heros);
-		if (enems[i]->getState() == 1)
-			enems[i]->Move(rect);
-		else if (enems[i]->getState() == 2)
-			Shoot(enems[i]);
-		if (enems[i]->Death())
-		{
 			enems.erase(enems.begin() + i);
-			gs.coin += 5;
+			gs.life--;
+			if (gs.life == 0)
+				system("exit");
 		}
-	}
-
-	for (i = 0; i < projs.size(); i++)
-	{
-		projs[i]->Move(rect);
-		projs[i]->Collision(enems);
-		if (projs[i]->Death())
+		else if (enems.size() > 0)
 		{
-			projs.erase(projs.begin() + i);
+			Collision();
+			if (enems[i]->cs.state == 1)
+				enems[i]->Move(rect);
+			else if (enems[i]->cs.state == 2)
+				ShootProj(enems[i]);
+			if (enems[i]->cs.death)
+			{
+				enems.erase(enems.begin() + i);
+				gs.coin += 10;
+			}
 		}
 	}
 
 	for (i = 0; i < heros.size(); i++)
 	{
 		heros[i]->Target(enems, rect);
-		if (heros[i]->getState() == 2)
-			Shoot(heros[i]);
-		if (heros[i]->Death())
+		if (heros[i]->cs.state == 2)
+			ShootProj(heros[i]);
+		if (heros[i]->cs.death)
 		{
 			heros.erase(heros.begin() + i);
+		}
+	}
+
+	for (i = 0; i < projs.size(); i++)
+	{
+		projs[i]->Move(rect);
+		if (projs[i]->cs.death)
+		{
+			projs.erase(projs.begin() + i);
 		}
 	}
 
@@ -294,7 +306,7 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	HDC memDC;
 	HBITMAP oldBit, newBit;
 	int w = rect.right / ROW;
-	int h = rect.bottom / (COL + 1);
+	int h = rect.bottom / (WCOL);
 
 	memDC = CreateCompatibleDC(hdc);
 
@@ -322,18 +334,40 @@ void GameManager::Play(HWND hWnd, HDC hdc)
 	DeleteDC(memDC);
 }
 
-void GameManager::Shoot(Character* charac)
+void GameManager::ShootProj(Hero* hero)
 {
 	POINT pt;
-	if (charac->canShoot())
+	if (hero->AttackAble())
 	{
 		Projectile* p = new Projectile;
-		pt = charac->GetcurPos();
-		pt.x += charac->GetDir().x/ROW;
-		pt.y += charac->GetDir().y/COL;
-		p->setProj(pt, charac->GetDir(), charac->setProjSize(),
-			charac->setProjDmg(), charac->getRange());
+		pt = hero->cs.curPos;
+		p->setProj(pt, hero->GetDir(), hero->getRange());
 		projs.push_back(p);
+	}
+}
+
+void GameManager::Collision()
+{
+	POINT pt;
+	for (int i = 0; i < enems.size(); i++)
+	{
+		pt = enems[i]->moving;
+		if (MapInfo[pt.x][pt.y] == 1 && enems[i]->GetcurPos().x)
+		{
+			enems[i]->state = 2;
+			if (enems[i]->AttackAble())
+			{
+				for (int j = 0; j < heros.size(); j++)
+				{
+					if (heros[i]->curPos.x == pt.x && heros[i]->curPos.y == pt.y)
+						if (enems[i]->AttackAble())
+							heros[i]->Damaged(enems[i]->dmg)
+				}
+			}
+		}
+
+		else
+			enems[i]->state = 1;
 	}
 	
 }

@@ -11,10 +11,12 @@ class GameManager
 {
 private:
 	GameStatus gs;
+	Character ch;
 	RECT rect;
 	Image* MapImage;
-	Image* EnemyImage;
+	Image* EnemyImage[6];
 	Image* HeroImage[6];
+	Image* HeroBackImage[6];
 	vector<POINT> cpath;
 	POINT respon = { 1,0 };
 	POINT destin = { 7,6 };
@@ -48,12 +50,13 @@ public:
 	void CreateEnemy();
 	void CreateHero(POINT pt, int hnum);
 	void setState(int s) { state = s; }
-	BOOL canCreate(POINT, int);
+	BOOL CreatAble(POINT, int);
 	BOOL isBuyable(int hnum) { return buyAble[hnum]; }
 
 	void Update();
 	void Play(HWND hWnd, HDC hdc);
-	void Shoot(Character*);
+	void Collision();
+	void ShootProj(Character*);
 	GameStatus CurStatus() { return gs; }
 
 	void close();
