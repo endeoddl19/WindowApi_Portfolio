@@ -5,7 +5,7 @@ POINT Utils::ToTilePos(POINT pt, int mapw, int maph)
 	POINT pos = { -1,-1 };
 	int i, j;
 	int w = mapw / ROW;
-	int h = maph / COL + 1;
+	int h = maph / COL;
 
 	for (i = 0; i < ROW; ++i)
 	{
@@ -29,7 +29,7 @@ POINT Utils::ToMapPos(POINT pt, int mapw, int maph)
 
 BOOL Utils::inCircleRange(POINT pt1, POINT pt2, int sz)
 {
-	if (PointDistance(pt1,pt2) < sz)
+	if (PointDistance(pt1,pt2) <= sz)
 		return true;
 	else
 		return false;
@@ -37,8 +37,8 @@ BOOL Utils::inCircleRange(POINT pt1, POINT pt2, int sz)
 
 BOOL Utils::inRectRange(POINT pt1, POINT pt2, int sz)
 {
-	if (pt1.x<pt2.x - sz && pt1.x > pt2.x + sz &&
-		pt1.y<pt2.y - sz && pt1.y > pt2.y)
+	if (pt1.x <= pt2.x - sz && pt1.x >= pt2.x + sz &&
+		pt1.y <= pt2.y - sz && pt1.y >= pt2.y)
 		return true;
 	else
 		return false;

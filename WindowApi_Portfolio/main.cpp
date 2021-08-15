@@ -6,13 +6,13 @@
 #include "GameManager.h"
 
 #define MAX_LOADSTRING 100
+#define IDC_PLAY_BTN 999
 #define IDC_MAPTOOL_BTN 1000
 #define IDC_SAVE_BTN 1001
 #define IDC_LOAD_BTN 1002
 #define IDC_END_BTN 1003
 #define IDC_TOLEFTSP_BTN 1004
 #define IDC_TORIGHTSP_BTN 1005
-#define IDC_PLAY_BTN 1006
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -26,9 +26,13 @@ MapTool mt;
 GameManager gm;
 GameStatus gs;
 OPENFILENAME OFN, SFN;
+HWND    hBtn[3];
+HWND MhBtn[5];
+//HBITMAP Btn[5];
 
 void GDI_Init();
 void GDI_End();
+void setBtns(HWND);
 void printGameStatus(HDC);
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
@@ -96,16 +100,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
     RegisterClassExW(&wcex);
 
-    wcex.lpfnWndProc = GameWndProc;
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = _T("Game Window Class");
-    RegisterClassExW(&wcex);
-
-    wcex.lpfnWndProc = MapToolWndProc;
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = _T("MapTool Window Class");
-    RegisterClassExW(&wcex);
-
     return RegisterClassExW(&wcex);
 }
 
@@ -117,7 +111,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    /*HWND hWnd = CreateWindowEx(WS_EX_APPWINDOW, szWindowClass, szTitle, WS_POPUP,
        0, 0, GetSystemMetrics(SM_CXSCREEN)-1, GetSystemMetrics(SM_CYSCREEN)-1,
        nullptr, nullptr, hInstance, nullptr);*/
-   RECT rt = { 0,0,1200,900 };
+   RECT rt = { 0,0,1200,800 };
    AdjustWindowRect(&rt, WS_OVERLAPPEDWINDOW, NULL);
 
    HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
@@ -138,41 +132,37 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
-    HDC     hdc;
-    HWND    hBtn[3];
-    int w, h;
-
+    HDC hdc = GetDC(hWnd);
     static HWND hWndClient;
-    CLIENTCREATESTRUCT  clientcreate;
-    MDICREATESTRUCT     mdicreate;
-    HWND hWndChild;
+    int     w, h, x, y;
+    static int state = 2;
+    // 0: 게임 플레이 / 1: 일시정지 / 2: 메인메뉴 / 3: 맵툴
+
+    static int hnum = -1;
+
+    static int spn = 0;
 
     switch (message)
     {
     case WM_CREATE:
         GetClientRect(hWnd, &rectView);
-        w = rectView.right / 5;
-        h = rectView.bottom / 7;
-        hBtn[0] = CreateWindow(_T("button"), _T("플레이"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w, h * 5, w, h, hWnd,
-            (HMENU)IDC_PLAY_BTN, hInst, NULL);
-        hBtn[1] = CreateWindow(_T("button"), _T("맵 에디터"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 3, h * 5, w, h, hWnd,
-            (HMENU)IDC_MAPTOOL_BTN, hInst, NULL);
-
-        clientcreate.hWindowMenu = GetSubMenu(GetMenu(hWnd), 0);
-        clientcreate.idFirstChild = 100;
-        hWndClient = CreateWindow(
-            _T("MDCLIENT"), NULL,
-            WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE,
-            0, 0, 0, 0,
-            hWnd, NULL, hInst,
-            (LPSTR)&clientcreate);
-        ShowWindow(hWndClient, SW_SHOW);
+        setBtns(hWnd);
+        GDI_Init();
+        gm.SetGame(rectView);
+        SetTimer(hWnd, 1, 32, NULL);
         break;
     case WM_TIMER:
+        switch (wParam)
+        {
+        case 1:
+            if (state == 0)
+                gm.Update();
+            break;
+        case 2:
+            if (state == 0)
+                gm.CreateEnemy();
+                break;
+        }
         InvalidateRect(hWnd, &rectView, false);
         break;
     case WM_COMMAND:
@@ -182,35 +172,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
             case IDC_PLAY_BTN:
             {
-                ChildWnd[0] = CreateWindow(
-                    _T("Game Window Class"), NULL, WS_CHILD | WS_VISIBLE,
-                    0, 0, rectView.right, rectView.bottom,
-                    hWnd, NULL, hInst, NULL);
-                return 0;
-            }
-            case IDC_MAPTOOL_BTN:
-            {
-                /*mdicreate.szClass = _T("MapTool Window Class");
-                mdicreate.szTitle = _T("MapTool Window Title");
-                mdicreate.hOwner = hInst;
-                mdicreate.x = CW_USEDEFAULT;
-                mdicreate.y = CW_USEDEFAULT;
-                mdicreate.cx = CW_USEDEFAULT;
-                mdicreate.cy = CW_USEDEFAULT;
-                mdicreate.style = 0;
-                mdicreate.lParam = 0;
-                hWndChild = (HWND)SendMessage(hWndClient,
-                    WM_MDICREATE, 0,
-                    (LPARAM)(LPMDICREATESTRUCT)&mdicreate);
-                return 0;*/
-                ChildWnd[1] = CreateWindow(
-                    _T("MapTool Window Class"), NULL, WS_CHILD | WS_VISIBLE,
-                    0, 0, rectView.right, rectView.bottom,
-                    hWnd, NULL, hInst, NULL);
+                for (int i = 0; i < 2; i++)
+                    ShowWindow(hBtn[i], SW_HIDE);
+                state = 0;
+                SetTimer(hWnd, 2, 4000, NULL);
+                //gm.CreateEnemy();
                 return 0;
             }
                 break;
-            break;
+            case IDC_MAPTOOL_BTN:
+            {
+                mt.SetMapTool(rectView);
+                state = 3;
+                for (int i = 0; i < 2; i++)
+                    ShowWindow(hBtn[i], SW_HIDE);
+                for (int i = 0; i < 5; i++)
+                    ShowWindow(MhBtn[i], SW_SHOW);
+                return 0;
+            }
+                break;
+            case IDC_TOLEFTSP_BTN:
+                if (spn > 0)
+                    spn--;
+                mt.DrawSP(hdc, spn);
+                break;
+            case IDC_TORIGHTSP_BTN:
+                if (spn < 2)
+                    spn++;
+                mt.DrawSP(hdc, spn);
+                break;
+            case IDC_SAVE_BTN:
+                mt.SaveMap(hWnd, OFN, SFN);
+                break;
+            case IDC_LOAD_BTN:
+                mt.LoadMap(hWnd, OFN);
+                break;
+            case IDC_END_BTN:
+                for (int i = 0; i < 5; i++)
+                    ShowWindow(MhBtn[i], SW_HIDE);
+                for (int i = 0; i < 2; i++)
+                    ShowWindow(hBtn[i], SW_SHOW);
+                state = 2;
+                break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -222,17 +225,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_LBUTTONDOWN:
+    {
+        if (state == 1 || state == 0)
+        {
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
+            if (x > rectView.right*4/WCOL && y > rectView.bottom *8/ WCOL)
+            {
+                if (x < rectView.right * 7 / WCOL)
+                    gm.setState(1);
+                else
+                    gm.setState(2);
+                hnum = (x - (rectView.right * 4 / WCOL)) * WCOL / rectView.right;
+                gm.setHnum(hnum);
+                state = 1;
+            }
+            else if (state == 1 && gm.isBuyable(hnum) && y < rectView.bottom * 8 / WCOL)
+            {
+                gm.CreateHero({ x, y }, hnum);
+                state = 0;
+                gm.setState(0);
+            }
+        }
+        else if (state == 3)
+        {
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
+            if (mt.posInMap({ x, y }))
+                mt.SetTile({ x, y });
+            else if (mt.posInSp({ x, y }))
+                mt.SelectTile({ x,y }, spn);
+            else
+                break;
+        }
+    }
+    break;
     case WM_PAINT:
         {
-            hdc = BeginPaint(hWnd, &ps);
+        hdc = BeginPaint(hWnd, &ps);
 
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            EndPaint(hWnd, &ps);
+        if (state == 0 || state == 1)
+        {
+            gm.Play(hdc);
+            printGameStatus(hdc);
         }
+        else if (state == 2)
+            gm.DrawMain(hdc);
+        else if (state == 3)
+            mt.Draw(hWnd, hdc, spn);
+
+        EndPaint(hWnd, &ps);
+    }
         break;
     case WM_DESTROY:
+        GDI_End();
+        gm.close();
+        KillTimer(hWnd, 1);
+        KillTimer(hWnd, 2);
+        ReleaseDC(hWnd, hdc);
         PostQuitMessage(0);
-        break;
     }
     return DefFrameProc(hWnd, hWndClient, message, wParam, lParam);
 }
@@ -256,241 +308,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-LRESULT CALLBACK GameWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    PAINTSTRUCT ps;
-    HDC hdc = GetDC(hWnd);
-
-    int     w, h, x, y;
-    int     cost;
-    static int state = 0;
-    static int hnum = -1;
-
-    switch (iMsg)
-    {
-    case WM_CREATE:
-        GetClientRect(hWnd, &rectView);
-        w = rectView.right / ROW;
-        h = rectView.bottom / COL;
-        GDI_Init();
-        gm.SetGame(rectView);
-        w = rectView.right / 12;
-        h = rectView.bottom / 9;
-
-        SetTimer(hWnd, 1, 32, NULL);
-        SetTimer(hWnd, 2, 3000, NULL);
-        SetTimer(hWnd, 3, 100, NULL);
-        break;
-    case WM_TIMER:
-        if (state == 0)
-        {
-            switch (wParam)
-            {
-            case 1:
-                gm.Update();
-                break;
-            case 2:
-                gm.CreateEnemy();
-                break;
-            }
-        }
-        else if (state == 1)
-        {
-            switch (wParam)
-            {
-            case 3:
-                
-                break;
-            }
-        }
-        InvalidateRect(hWnd, &rectView, false);
-        break;
-    case WM_COMMAND:
-    {
-        int wmId = LOWORD(wParam);
-        // 메뉴 선택을 구문 분석합니다:
-        switch (wmId)
-        {
-        }
-
-    }
-    break;
-    case WM_LBUTTONDOWN:
-    {
-        x = LOWORD(lParam);
-        y = HIWORD(lParam);
-        if (y > rectView.bottom / (COL + 1) * COL)
-        {
-            if (x < rectView.right / 2)
-                gm.setState(1);
-            else
-                gm.setState(2);
-            hnum = (x / (rectView.right / 6));
-
-            state = 1;
-        }
-        else if (state == 1 && gm.isBuyable(hnum) && y <rectView.bottom/(COL+1)*COL)
-        {
-            gm.CreateHero({ x, y }, hnum);
-            state = 0;
-            gm.setState(0);
-        }
-    }
-    /*case WM_CHAR:
-        switch (wParam)
-        {
-        case '1':
-            gm.setState(1);
-            hnum = 0;
-            state = 1;
-            break;
-        }
-        break;*/
-    case WM_PAINT:
-    {
-        hdc = BeginPaint(hWnd, &ps);
-
-        gm.Play(hWnd, hdc);
-        printGameStatus(hdc);
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        EndPaint(hWnd, &ps);
-    }
-    break;
-    case WM_DESTROY:
-        GDI_End();
-        gm.close();
-        KillTimer(hWnd, 1);
-        KillTimer(hWnd, 2);
-        KillTimer(hWnd, 3);
-        ReleaseDC(hWnd, hdc);
-        PostQuitMessage(0);
-        break;
-    }
-    return DefMDIChildProc(hWnd, iMsg, wParam, lParam);
-}
-
-
-LRESULT CALLBACK MapToolWndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    HDC hdc = GetDC(hWnd);
-    PAINTSTRUCT ps;
-    Graphics* graphic = new Graphics(hdc);
-
-    HWND hBtn[5];
-    HBITMAP Btn[5];
-    int     w, h;
-    static int x, y;
-    static int spn = 0;
-    static POINT mpt, tpt;
-
-    switch (iMsg)
-    {
-    case WM_CREATE:
-        GetClientRect(hWnd, &rectView);
-        w = rectView.right / 20;
-        h = rectView.bottom / 20;
-
-        hBtn[0] = CreateWindow(_T("button"), _T("SAVE"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 11, h * 16, w * 2, h * 2, hWnd,
-            (HMENU)IDC_SAVE_BTN, hInst, NULL);
-        hBtn[1] = CreateWindow(_T("button"), _T("LOAD"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 14, h * 16, w * 2, h * 2, hWnd,
-            (HMENU)IDC_LOAD_BTN, hInst, NULL);
-        hBtn[2] = CreateWindow(_T("button"), _T("END"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 17, h * 16, w * 2, h * 2, hWnd,
-            (HMENU)IDC_END_BTN, hInst, NULL);
-        hBtn[3] = CreateWindow(_T("button"), _T("<<"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 13, h * 13, w, h * 2, hWnd,
-            (HMENU)IDC_TOLEFTSP_BTN, hInst, NULL);
-        hBtn[4] = CreateWindow(_T("button"), _T(">>"),
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            w * 16, h * 13, w, h * 2, hWnd,
-            (HMENU)IDC_TORIGHTSP_BTN, hInst, NULL);
-        GDI_Init();
-        mt.SetMapTool(rectView);
-        SetTimer(hWnd, 1, 32, NULL);
-        break;
-    case WM_TIMER:
-        InvalidateRect(hWnd, &rectView, false);
-        break;
-    case WM_COMMAND:
-    {
-        int wmId = LOWORD(wParam);
-        // 메뉴 선택을 구문 분석합니다:
-        switch (wmId)
-        {
-        case IDC_TOLEFTSP_BTN:
-            if (spn > 0)
-                spn--;
-            mt.DrawSP(graphic,spn);
-            break;
-        case IDC_TORIGHTSP_BTN:
-            if (spn < 2)
-                spn++;
-            mt.DrawSP(graphic, spn);
-            break;
-        case IDC_SAVE_BTN:
-            mt.SaveMap(hWnd, OFN, SFN);
-            break;
-        case IDC_LOAD_BTN:
-            mt.LoadMap(hWnd, OFN);
-            break;
-        case IDC_END_BTN:
-            DestroyWindow(hWnd);
-            break;
-        default:
-            return DefWindowProc(hWnd, iMsg, wParam, lParam);
-        }
-    }
-    break;
-    case WM_LBUTTONDOWN:
-    {
-        x = LOWORD(lParam);
-        y = HIWORD(lParam);
-        if (mt.posInMap({ x, y }))
-            mt.SetTile({ x, y });
-        else if (mt.posInSp({ x, y }))
-            mt.SelectTile({ x,y }, spn);
-        else
-            break;
-    }
-    break;
-    case WM_PAINT:
-    {
-        hdc = BeginPaint(hWnd, &ps);
-
-        mt.Draw(hWnd, hdc, spn);
-
-        mpt = mt.curposition();
-        tpt = mt.curtile();
-
-        TCHAR strTest1[32];
-        _stprintf_s(strTest1, _countof(strTest1), _T("%d, %d"), mpt.x,mpt.y);
-        TextOut(hdc, 10, 10,
-            strTest1, _tcslen(strTest1));
-        TCHAR strTest2[32];
-        _stprintf_s(strTest2, _countof(strTest2), _T("%d, %d"), tpt.x, tpt.y);
-        TextOut(hdc, 10, 30,
-            strTest2, _tcslen(strTest2));
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        EndPaint(hWnd, &ps);
-    }
-    break;
-    case WM_DESTROY:
-        GDI_End();
-        delete graphic;
-        KillTimer(hWnd, 1);
-        ReleaseDC(hWnd, hdc);
-        PostQuitMessage(0);
-        break;
-    }
-    return DefMDIChildProc(hWnd, iMsg, wParam, lParam);
-}
-
 void GDI_Init()
 {
     GdiplusStartupInput gpsi;
@@ -499,6 +316,49 @@ void GDI_Init()
 void GDI_End()
 {
     GdiplusShutdown(g_GdiToken);
+}
+
+void setBtns(HWND hWnd)
+{
+    int w, h;
+    w = rectView.right / 5;
+    h = rectView.bottom / WCOL;
+    hBtn[0] = CreateWindow(_T("button"), _T("플레이"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w, h * COL, w, h, hWnd,
+        (HMENU)IDC_PLAY_BTN, hInst, NULL);
+    hBtn[1] = CreateWindow(_T("button"), _T("맵 에디터"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 3, h * COL, w, h, hWnd,
+        (HMENU)IDC_MAPTOOL_BTN, hInst, NULL);
+
+    w = rectView.right / 20;
+    h = rectView.bottom / 20;
+    MhBtn[0] = CreateWindow(_T("button"), _T("SAVE"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 11, h * 16, w * 2, h * 2, hWnd,
+        (HMENU)IDC_SAVE_BTN, hInst, NULL);
+    MhBtn[1] = CreateWindow(_T("button"), _T("LOAD"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 14, h * 16, w * 2, h * 2, hWnd,
+        (HMENU)IDC_LOAD_BTN, hInst, NULL);
+    MhBtn[2] = CreateWindow(_T("button"), _T("END"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 17, h * 16, w * 2, h * 2, hWnd,
+        (HMENU)IDC_END_BTN, hInst, NULL);
+    MhBtn[3] = CreateWindow(_T("button"), _T("<<"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 13, h * 13, w, h * 2, hWnd,
+        (HMENU)IDC_TOLEFTSP_BTN, hInst, NULL);
+    MhBtn[4] = CreateWindow(_T("button"), _T(">>"),
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        w * 16, h * 13, w, h * 2, hWnd,
+        (HMENU)IDC_TORIGHTSP_BTN, hInst, NULL);
+
+    for (int i = 0; i < 2; i++)
+        ShowWindow(hBtn[i], SW_SHOW);
+    for (int i = 0; i < 5; i++)
+        ShowWindow(MhBtn[i], SW_HIDE);
 }
 
 void printGameStatus(HDC hdc)

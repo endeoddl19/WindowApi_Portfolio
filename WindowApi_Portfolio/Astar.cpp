@@ -31,22 +31,6 @@ void ANode::setMap()
 		}
 	}
 
-	/*FILE* fp;
-	fp = fopen("maps/test1.txt", "r");
-	char chr = fgetc(fp);
-
-	for (i = 0; i < 8; i++)
-	{
-		for (j = 0; j < 8; j++)
-		{
-			if (chr == '\n')
-				chr = fgetc(fp);
-			map[i][j]->val = (chr - '0');
-			chr = fgetc(fp);
-		}
-	}
-	fclose(fp);*/
-
 	HANDLE hFile;
 	TCHAR inBuff[128];
 	DWORD size = 0;
@@ -109,19 +93,27 @@ vector<POINT> ANode::getPath()
 				path->push_back({ i,j });
 		}
 	}*/
-	path.push_back({ 1, 0 });
-	path.push_back({ 1, 1 });
-	path.push_back({ 1, 2 });
-	path.push_back({ 2, 2 });
-	path.push_back({ 2, 3 });
-	path.push_back({ 3, 3 });
-	path.push_back({ 3, 4 });
-	path.push_back({ 4, 4 });
-	path.push_back({ 5, 4 });
-	path.push_back({ 5, 5 });
-	path.push_back({ 5, 6 });
-	path.push_back({ 6, 6 });
-	path.push_back({ 7, 6 });
+	path.push_back({ 1,0 });
+	path.push_back({ 2,0 });
+	path.push_back({ 3,0 });
+	path.push_back({ 4,0 });
+	path.push_back({ 5,0 });
+	path.push_back({ 6,0 });
+	path.push_back({ 7,1 });
+	path.push_back({ 6,2 });
+	path.push_back({ 5,2 });
+	path.push_back({ 4,3 });
+	path.push_back({ 3,3 });
+	path.push_back({ 2,4 });
+	path.push_back({ 1,5 });
+	path.push_back({ 1,6 });
+	path.push_back({ 1,7 });
+	path.push_back({ 2,6 });
+	path.push_back({ 3,6 });
+	path.push_back({ 4,6 });
+	path.push_back({ 5,5 });
+	path.push_back({ 6,6 });
+	path.push_back({ 7,6 });
 
 	return path;
 }

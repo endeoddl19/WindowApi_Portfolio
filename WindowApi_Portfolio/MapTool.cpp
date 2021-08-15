@@ -20,9 +20,11 @@ void MapTool::SetMapTool(RECT rt)
 	spy = rth / 10;
 }
 
-void MapTool::DrawSP(Graphics* graphic, int n)
+void MapTool::DrawSP(HDC hdc, int n)
 {
+	Graphics* graphic = new Graphics(hdc);
 	graphic->DrawImage(imgs[n], spx, spy, spw, sph);
+	delete graphic;
 }
 
 void MapTool::Draw(HWND hWnd, HDC hdc,int n)
@@ -40,7 +42,7 @@ void MapTool::Draw(HWND hWnd, HDC hdc,int n)
 
 	Graphics* graphic = new Graphics(memDC);
 
-	DrawSP(graphic, n);
+	DrawSP(memDC, n);
 	DrawCurTile(graphic);
 	//graphic->DrawImage(imgs[3], mapx, mapy, mapw, maph);
 	
@@ -69,7 +71,7 @@ void MapTool::Draw(HWND hWnd, HDC hdc,int n)
 void MapTool::DrawCurTile(Graphics* graphic)
 {
 	int wh = spw / 7;
-	Pen pen(Color(255, 0, 0));
+	Pen pen(Color(255, 0, 0), 3);
 	graphic->DrawRectangle(&pen, spx + curTile.x*wh, spy + curTile.y * wh, wh, wh);
 }
 

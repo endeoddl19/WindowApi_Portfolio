@@ -5,105 +5,91 @@ void Character::Target(Hero* h, vector<Enemy*> enems, RECT rt)
 	bool hast = false;
 	for (int i = enems.size() - 1; i >= 0; i--)
 	{
-		if (ut.inCircleRange(curPos, enems[i]->GetcurPos(), range))
+		if (ut.inCircleRange(h->cs.curPos, enems[i]->cs.curPos, h->cs.range))
 		{
-			state = 2;
-			dir = { (enems[i]->GetcurPos().x - curPos.x),
-				(enems[i]->GetcurPos().y - curPos.y) };
+			h->cs.state = 2;
+			h->cs.dir = { (enems[i]->cs.curPos.x - h->cs.curPos.x),
+				(enems[i]->cs.curPos.y - h->cs.curPos.y) };
 			hast = true;
 
-			if (AttackAble)
-				enems[i]->Damaged(dmg);
-			if (enems[i]->GetCurHP() <= 0)
-				enems[i]->Die();
+			if (h->cs.cnt == h->cs.atkspd)
+			{
+				Damaged(enems[i], h->cs.dmg);
+				h->cs.cnt = 1;
+				if (enems[i]->cs.hp <= 0)
+					enems[i]->cs.death = true;
+			}
+			else
+				h->cs.cnt++;
 		}
 	}
 	if (!hast)
-		state = 0;
+		h->cs.state = 0;
 }
 
 void Character::FindAtkDir(Hero* hero, vector<POINT> pts, RECT rect)
 {
-	POINT pt;
-	vector<POINT> temp;
-	int max = 0, m = 0;
-	pt = ut.ToTilePos(hero->cs.curPos, rect.right, rect.bottom);
-
-	int i = 0;
-	for ( i = 0; i < pts.size(); i++)
+	if (hero->heronum > 2)
+		hero->cs.dir = { -1,0 };
+	else
 	{
-		if (pts[i].x == pt.x)
-			temp.push_back(pts[i]);
-		if (pts[i].y == pt.y)
-			temp.push_back(pts[i]);
-	}
+		POINT pt;
+		pt = hero->cs.curPos;
+		pt.x -= rect.right / WCOL;
+		pt.y -= rect.bottom * 3 / WCOL;
+		vector<POINT> temp;
+		int min = 1024512, m = 0;
+		pt = ut.ToTilePos(pt, rect.right * 7 / WCOL, rect.bottom / 2);
 
-	for (i = 0; i < temp.size(); i++)
-	{
-		if (ut.PointDistance(temp[i], pt) > max)
+		int i = 0;
+		for (i = 0; i < pts.size(); i++)
 		{
-			max = ut.PointDistance(temp[i], pt);
-			m = i;
+			if (pts[i].x == pt.x)
+				temp.push_back(pts[i]);
+			if (pts[i].y == pt.y)
+				temp.push_back(pts[i]);
 		}
-	}
-	if (temp[m].x == pt.x)
-	{
-		hero->cs.dir.x = 0;
-		hero->cs.dir.y = abs(temp[m].y - pt.y) / abs(temp[m].y - pt.y);
-	}
-	else
-	{
-		hero->cs.dir.x = abs(temp[m].x - pt.x) / abs(temp[m].x - pt.x);
-		hero->cs.dir.y = 0;
-	}
-}
 
-BOOL Character::AttackAble(Hero* hero)
-{
-	if (hero->cs.cnt == hero->cs.atkspd)
-	{
-		hero->cs.cnt = 1;
-		return true;
-	}
-	else
-	{
-		hero->cs.cnt++;
-		return false;
-	}
-}
-
-BOOL Character::AttackAble(Enemy* enemy)
-{
-	if (enemy->cs.cnt == enemy->cs.atkspd)
-	{
-		enemy->cs.cnt = 1;
-		return true;
-	}
-	else
-	{
-		enemy->cs.cnt++;
-		return false;
+		for (i = 0; i < temp.size(); i++)
+		{
+			if (ut.PointDistance(temp[i], pt) < min)
+			{
+				min = ut.PointDistance(temp[i], pt);
+				m = i;
+			}
+		}
+		if (temp[m].x == pt.x)
+		{
+			hero->cs.dir.x = 0;
+			hero->cs.dir.y = abs(temp[m].y - pt.y) / abs(temp[m].y - pt.y);
+		}
+		else
+		{
+			hero->cs.dir.x = abs(temp[m].x - pt.x) / abs(temp[m].x - pt.x);
+			hero->cs.dir.y = 0;
+		}
 	}
 }
 
 void Character::Move(Enemy* e, RECT rt)
 {
-	int w = rt.right;
-	int h = rt.bottom;
+	int w = rt.right * 7 / WCOL;
+	int h = rt.bottom / 2;
 	w /= ROW;
-	h /= WCOL;
+	h /= COL;
 	int x, y, dx, dy;
 
-	x = e->path[e->pathcount].x * w + w / 2;
-	y = e->path[e->pathcount].y * h + h / 2;
-	dx = e->path[e->pathcount+1].x * w + w / 2;
-	dy = e->path[e->pathcount+1].y * h + h / 2;
+	x = rt.right / WCOL + e->path[e->pathcount].x * w + w / 2;
+	y = rt.bottom * 3 / WCOL + e->path[e->pathcount].y * h + h / 2;
+	dx = rt.right / WCOL + e->path[e->pathcount + 1].x * w + w / 2;
+	dy = rt.bottom * 3 / WCOL + e->path[e->pathcount + 1].y * h + h / 2;
 	(dx - x >= 0) ? e->curDir = { 1,0 } : e->curDir = { -1,0 };
+	//(dy - y >= 0) ? e->curDir = { 0,1 } : e->curDir = { 0,-1 };
 
-	if (e->movecnt < 20)
+	if (e->movecnt < 25)
 	{
-		e->cs.curPos.x += (dx - x) / 20;
-		e->cs.curPos.y += (dy - y) / 20;
+		e->cs.curPos.x += (dx - x) / 25;
+		e->cs.curPos.y += (dy - y) / 24;
 		e->movecnt++;
 	}
 	else
@@ -137,62 +123,4 @@ bool Character::isArrive(Enemy* e)
 		return true;
 	else
 		return false;
-}
-
-Hero::Hero(int hnum)
-{
-	state = 0;
-	cnt = 1;
-	heronum = hnum;
-	switch (hnum)
-	{
-	case 0:
-		range = 250;
-		atkspd = 10;
-		dmg = 15;
-		maxhp = 100;
-		hp = 100;
-		projsize = 4;
-		break;
-	case 1:
-		range = 300;
-		atkspd = 30;
-		dmg = 30;
-		maxhp = 100;
-		hp = 100;
-		projsize = 8;
-		break;
-	case 2:
-		range = 400;
-		atkspd = 40;
-		dmg = 50;
-		maxhp = 200;
-		hp = 200;
-		projsize = 10;
-		break;
-	case 3:
-		range = 20;
-		atkspd = 30;
-		dmg = 15;
-		maxhp = 100;
-		hp = 100;
-		projsize = 1;
-		break;
-	case 4:
-		range = 20;
-		atkspd = 40;
-		dmg = 10;
-		maxhp = 350;
-		hp = 350;
-		projsize = 1;
-		break;
-	case 5:
-		range = 20;
-		atkspd = 50;
-		dmg = 40;
-		maxhp = 200;
-		hp = 200;
-		projsize = 1;
-		break;
-	}
 }

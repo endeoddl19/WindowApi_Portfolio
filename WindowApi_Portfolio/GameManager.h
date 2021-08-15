@@ -13,32 +13,38 @@ private:
 	GameStatus gs;
 	Character ch;
 	RECT rect;
+
+	Image* MainMenu;
 	Image* MapImage;
 	Image* EnemyImage[6];
-	Image* HeroImage[6];
-	Image* HeroBackImage[6];
+	Image* HeroImage;
+	Image* HeroIcon;
+	Image* HeroPixel;
+	Image* HeroText;
+	Image* ProjImage[6];
+
+	vector<Hero*> HeroInfo;
+	CharStat Stats[8];
 	vector<POINT> cpath;
 	POINT respon = { 1,0 };
 	POINT destin = { 7,6 };
 	BOOL buyAble[6];
-
 	int cost[6] = { 100,150,200,150,200,300 };
 	int MapInfo[ROW][COL] = { 0 };
-	// 0: 일반 /  1: 길 /  2: 출발 / 3: 도착 / 4: 
-	int mapw, maph;
-	int state;
-	// 0: 플레이 / 1: 일시정지
+	// 0: 빈칸 /  1: 길 /  2: 출발 / 3: 도착 / 4: 영웅
+	int mapw, maph, mapx, mapy, state, hnum;
+	// state < 0: 플레이 / 1: 일시정지 >
 
 	void FindPath();
-	void DrawEnemy(HDC hdc, Graphics* graphic);
-	void DrawHero(HDC hdc, Graphics* graphic);
-	void DrawProj(HDC hdc, Graphics* graphic);
+	void setImages();
+	void DrawEnemy(HDC, Graphics*);
+	void DrawHero(HDC, Graphics*);
 	void DrawHpBar(HDC,POINT,FLOAT);
-	void DrawRangeTile(Graphics*);
-	void DrawAdjTile(Graphics*);
+	void RangeSelected(Graphics*);
+	void AdjSelected(Graphics*);
 	void DrawBuyableTile(Graphics*);
+	void DrawHeroInfo(HDC hdc, Graphics*);
 public:
-	vector<Character*> charcs;
 	vector<Hero*> heros;
 	vector<Enemy*> enems;
 	vector<Projectile*> projs;
@@ -46,19 +52,21 @@ public:
 	~GameManager() {}
 	Utils ut;
 
-	void SetGame(RECT rt);
+	void SetGame(RECT);
+	void DrawMain(HDC);
 	void CreateEnemy();
-	void CreateHero(POINT pt, int hnum);
-	void setState(int s) { state = s; }
+	void CreateHero(POINT, int);
 	BOOL CreatAble(POINT, int);
+	void setState(int s) { state = s; }
+	void setHnum(int h) { hnum = h; }
 	BOOL isBuyable(int hnum) { return buyAble[hnum]; }
+	void Collision(Enemy* e);
+	void ShootProj(Hero*);
+	void Attack(Enemy*);
 
 	void Update();
-	void Play(HWND hWnd, HDC hdc);
-	void Collision();
-	void ShootProj(Character*);
+	void Play(HDC);
 	GameStatus CurStatus() { return gs; }
-
 	void close();
 };
 

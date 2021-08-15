@@ -22,8 +22,6 @@
 #include <commdlg.h>
 #pragma comment(lib,"msimg32.lib")
 
-#define _UNICODE
-
 #define ROW 8
 #define COL 8
 #define WCOL 10

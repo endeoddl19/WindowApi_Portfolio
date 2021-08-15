@@ -8,9 +8,6 @@
 #include <fstream>
 #include <cstdio>
 
-#define ROW 8
-#define COL 8
-
 using namespace Gdiplus;
 
 struct Tile
@@ -39,23 +36,23 @@ private:
 	int spnum;
 public:
 	MapTool();
-	~MapTool() { if (imgs[0] != nullptr) delete[]imgs; }
+	~MapTool() { if (imgs[0] != nullptr) for (int i = 0; i < 4; i++) delete imgs[i];}
 
-	bool posInMap(POINT pt);
-	bool posInSp(POINT pt);
+	bool posInMap(POINT);
+	bool posInSp(POINT);
 	POINT curposition() { return curPos; }
 	POINT curtile() { return curTile; }
 
-	void SetMapTool(RECT rt);
-	void DrawSP(Graphics* graphic, int n);
+	void SetMapTool(RECT);
+	void DrawSP(HDC, int);
 
-	void Draw(HWND hWnd, HDC hdc, int n);
-	void DrawCurTile(Graphics* graphic);
-	void SelectTile(POINT pt, int n);
-	void SetTile(POINT pt);
+	void Draw(HWND, HDC, int);
+	void DrawCurTile(Graphics*);
+	void SelectTile(POINT, int);
+	void SetTile(POINT);
 
-	void LoadMap(HWND hWnd, OPENFILENAME OFN);
-	void SaveMap(HWND hWnd, OPENFILENAME OFN, OPENFILENAME SFN);
+	void LoadMap(HWND, OPENFILENAME);
+	void SaveMap(HWND, OPENFILENAME, OPENFILENAME);
 };
 
 #endif
