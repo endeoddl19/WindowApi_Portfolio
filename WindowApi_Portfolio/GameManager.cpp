@@ -12,7 +12,8 @@ void GameManager::FindPath()
 void GameManager::setImages()
 {
 	MainMenu = Image::FromFile((WCHAR*)L"images/MainBackground.png");
-	MapImage = Image::FromFile((WCHAR*)L"maps/back2.png");
+	GameInfo = Image::FromFile((WCHAR*)L"images/GameInfo.png");
+	MapImage = Image::FromFile((WCHAR*)L"maps/back2_2.png");
 	EnemyImage[0] = Image::FromFile((WCHAR*)L"images/EnemyLeft.png");
 	EnemyImage[1] = Image::FromFile((WCHAR*)L"images/EnemyRight.png");
 	EnemyImage[2] = Image::FromFile((WCHAR*)L"images/EnemyAtkLeft.png");
@@ -22,6 +23,7 @@ void GameManager::setImages()
 	HeroPixel = Image::FromFile((WCHAR*)L"images/Heros_p.png");
 	HeroIcon = Image::FromFile((WCHAR*)L"images/Heros_icon.png");
 	HeroImage = Image::FromFile((WCHAR*)L"images/Heros_img.png");
+	HeroName = Image::FromFile((WCHAR*)L"images/Heros_name.png");
 	HeroText = Image::FromFile((WCHAR*)L"images/Heros_info.png");
 	ProjImage[0] = Image::FromFile((WCHAR*)L"images/Khan.png");
 	ProjImage[1] = Image::FromFile((WCHAR*)L"images/Ram_Back.png");
@@ -29,6 +31,8 @@ void GameManager::setImages()
 	ProjImage[3] = Image::FromFile((WCHAR*)L"images/speer.png");
 	ProjImage[4] = Image::FromFile((WCHAR*)L"images/Leo_Back.png");
 	ProjImage[5] = Image::FromFile((WCHAR*)L"images/YSS.png");
+	Coin = Image::FromFile((WCHAR*)L"images/coin.png");
+	CoinText = Image::FromFile((WCHAR*)L"images/coin_text.png");
 }
 
 void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
@@ -41,17 +45,19 @@ void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 	{
 		pt = enems[i]->cs.curPos;
 		dir = enems[i]->curDir;
-		if (dir.x == 1) // 방향 일단 고정
-			d = 1;
-		else d = 0;
+		if (dir.x == -1) d = 0;
+		else d = 1;
 		if (enems[i]->cs.state == 1)
-			graphic->DrawImage(EnemyImage[d], Rect(pt.x - mapw / ROW / 2,pt.y - maph / COL / 2,
+			graphic->DrawImage(EnemyImage[d], 
+				Rect(pt.x - mapw / ROW / 2,pt.y - maph / COL / 2,
 				mapw / ROW, maph / COL),
 				0, 0, 48, 48, Unit::UnitPixel);
 		else if (enems[i]->cs.state == 2)
-			graphic->DrawImage(EnemyImage[d+2], Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
+			graphic->DrawImage(EnemyImage[d+2], 
+				Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
 				mapw / ROW, maph / COL),
-				(int)ch.getAtk(enems[i]) * 48, 0, 48, 48, Unit::UnitPixel);
+				(int)ch.getAtk(enems[i]) * 48, 0, 
+				48, 48, Unit::UnitPixel);
 
 		DrawHpBar(hdc, pt, ch.GetHP(enems[i]));
 	}
@@ -78,7 +84,8 @@ void GameManager::DrawHero(HDC hdc, Graphics* graphic)
 	{
 		graphic->DrawImage(HeroIcon,
 			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL,
-				mapy + maph, rect.right / WCOL, rect.bottom / WCOL * 2),
+				mapy + maph + rect.bottom * 2 / WCOL / 5, 
+				rect.right / WCOL, rect.bottom * 8 / WCOL / 5),
 			i * 100, 0, 100, 100, Unit::UnitPixel);
 	}
 }
@@ -147,6 +154,10 @@ void GameManager::DrawBuyableTile(Graphics* graphic)
 
 void GameManager::DrawHeroInfo(HDC hdc, Graphics* graphic)
 {
+	int arr[6] = { 266, 386, 327, 253, 352, 325 };
+	int s = 0;
+	for (int i = 0; i < hnum; i++)
+		s += arr[i];
 	SolidBrush brush1(Color(170, 30, 30, 30));
 	SolidBrush brush2(Color(220, 198, 0, 0));
 	SolidBrush brush3(Color(220, 255, 89, 30));
@@ -156,22 +167,100 @@ void GameManager::DrawHeroInfo(HDC hdc, Graphics* graphic)
 	graphic->FillRectangle(&brush1, mapx + mapw, rect.bottom * 2 / WCOL,
 		rect.right * 2 / WCOL, rect.bottom * 6 / WCOL);
 
-	graphic->DrawImage(HeroImage, Rect(mapx + mapw, rect.bottom * 5 / WCOL / 2,
+	graphic->DrawImage(HeroName, Rect(5 + mapx + mapw, rect.bottom * 5 / WCOL / 2,
+		rect.right * 2 / WCOL - 10, rect.bottom / WCOL),
+		s, 0, arr[hnum], 58, Unit::UnitPixel);
+
+	graphic->DrawImage(HeroImage, Rect(mapx + mapw, rect.bottom * 7 / WCOL / 2,
 		rect.right * 2 / WCOL, rect.bottom * 2 / WCOL),
 		hnum * 200, 0, 200, 200, Unit::UnitPixel);
 
-	graphic->DrawImage(HeroText, Rect(mapx + mapw, rect.bottom * 9 / WCOL / 2,
+	graphic->DrawImage(HeroText, Rect(mapx + mapw, rect.bottom * 11 / WCOL / 2,
 		rect.right * 2 / WCOL / 3, rect.bottom * 5 / WCOL / 2),
 		0, 0, 364, 480, Unit::UnitPixel);
 
-	graphic->FillRectangle(&brush2, INT(5 +mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 9 / WCOL / 2 + 2),
+	graphic->FillRectangle(&brush2, INT(5 +mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 11 / WCOL / 2 + 2),
 		INT(rect.right * 4 / WCOL / 3 * HeroInfo[hnum]->cs.hp / 350), INT(rect.bottom * 5 / WCOL / 8 - 5));
-	graphic->FillRectangle(&brush3, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 41 / WCOL / 8 + 2),
+	graphic->FillRectangle(&brush3, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 49 / WCOL / 8 + 2),
 		INT(rect.right * 4 / WCOL / 3 * HeroInfo[hnum]->cs.dmg / 40), INT(rect.bottom * 5 / WCOL / 8 - 5));
-	graphic->FillRectangle(&brush4, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 23 / WCOL / 4 + 2),
+	graphic->FillRectangle(&brush4, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 27 / WCOL / 4 + 2),
 		INT(rect.right * 4 / WCOL / 3 * (90 - HeroInfo[hnum]->cs.atkspd) / 90), INT(rect.bottom * 5 / WCOL / 8 - 5));
-	graphic->FillRectangle(&brush5, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 51 / WCOL / 8 + 2),
+	graphic->FillRectangle(&brush5, INT(5 + mapx + mapw + rect.right * 2 / WCOL / 3), INT(rect.bottom * 59 / WCOL / 8 + 2),
 		INT(rect.right * 4 / WCOL / 3 * HeroInfo[hnum]->cs.range * ROW / mapw / 3), INT(rect.bottom * 5 / WCOL / 8 - 5));
+}
+
+void GameManager::DrawGameInfo(Graphics* graphic)
+{
+	graphic->DrawImage(GameInfo,
+		Rect(rect.right * 3 / WCOL, 10, rect.right * 4 / WCOL, rect.bottom * 3 / WCOL / 4),
+		727, 0, 551, 160, Unit::UnitPixel);
+	graphic->DrawImage(GameInfo,
+		Rect(rect.right * 2 / WCOL, 20 + rect.bottom * 3 / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL/2),
+		0, 0, 387, 160, Unit::UnitPixel);
+	graphic->DrawImage(GameInfo,
+		Rect(rect.right * 5 / WCOL, 20 + rect.bottom * 3 / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL/2),
+		387, 0, 340, 160, Unit::UnitPixel);
+}
+
+void GameManager::DrawCoin(Graphics* graphic)
+{
+	int arr[10] = { 73, 60, 64, 64, 71, 65, 69, 63, 71, 69 };
+	int a1, a2, s1 = 0, s2 = 0, i, j;
+
+	graphic->DrawImage(Coin,
+		Rect(rect.right * 2 / WCOL, mapy + maph + rect.bottom / WCOL / 2,
+			rect.right / WCOL, rect.bottom / WCOL),
+		0, 0, 200, 200, Unit::UnitPixel);
+
+	for (i = 0; i < 6; i++)
+	{
+		graphic->DrawImage(Coin,
+			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL + rect.right / WCOL / 6,
+				mapy + maph + 10, rect.right / WCOL / 6, rect.bottom * 2 / WCOL / 5),
+			0, 0, 200, 200, Unit::UnitPixel);
+
+		s1 = s2 = 0;
+		for (j = 0; j < pcost[3 * i]; j++)
+			s1 += arr[j];
+		for (j = 0; j < pcost[3 * i + 1]; j++)
+			s2 += arr[j];
+
+		graphic->DrawImage(CoinText,
+			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL + rect.right / WCOL / 3,
+				mapy + maph + 10, rect.right / WCOL / 6, rect.bottom * 2 / WCOL / 5),
+			s1, 0, arr[pcost[3*i]], 120, Unit::UnitPixel);
+		graphic->DrawImage(CoinText,
+			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL + rect.right / WCOL / 2,
+				mapy + maph + 10, rect.right / WCOL / 6, rect.bottom * 2 / WCOL / 5),
+			s2, 0, arr[pcost[1 + 3 * i]], 120, Unit::UnitPixel);
+		graphic->DrawImage(CoinText,
+			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL + rect.right / WCOL * 2 / 3,
+				mapy + maph + 10, rect.right / WCOL / 6, rect.bottom * 2 / WCOL / 5),
+			0, 0, 73, 120, Unit::UnitPixel);
+			
+	}
+
+	s1 = s2 = 0;
+	a1 = gs.coin / 100;
+	for (i = 0; i < a1; i++)
+		s1 += arr[i];
+	a2 = gs.coin / 10;
+	a2 -= a1 * 10;
+	for (i = 0; i < a2; i++)
+		s2 += arr[i];
+
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 3 / WCOL, mapy + maph + rect.bottom / WCOL / 2,
+			rect.right / WCOL / 3, rect.bottom / WCOL),
+		s1, 0, arr[a1], 120, Unit::UnitPixel);
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 3 / WCOL + rect.right / WCOL / 3, mapy + maph + rect.bottom / WCOL / 2,
+			rect.right / WCOL / 3, rect.bottom / WCOL),
+		s2, 0, arr[a2], 120, Unit::UnitPixel);
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 3 / WCOL + rect.right * 2 / WCOL / 3, mapy + maph + rect.bottom / WCOL / 2,
+			rect.right / WCOL / 3, rect.bottom / WCOL),
+		0, 0, 73, 120, Unit::UnitPixel);
 }
 
 GameManager::GameManager()
@@ -187,9 +276,9 @@ void GameManager::SetGame(RECT rt)
 	
 	rect = rt;
 	mapw = (rt.right - rt.left) * 7 / WCOL;
-	maph = (rt.bottom - rt.top) / 2;
+	maph = (rt.bottom - rt.top) * 6 / WCOL;
 	mapx = rt.right / WCOL;
-	mapy = rt.bottom * 3 / WCOL;
+	mapy = rt.bottom * 2 / WCOL;
 	int i, j;
 
 	/*OPENFILENAME OFN;
@@ -225,9 +314,9 @@ void GameManager::SetGame(RECT rt)
 
 	Stats[0] = { {0,0},{0,0},100,100,15,20,(FLOAT)(mapw / ROW * 2),1,0,false };
 	Stats[1] = { {0,0},{0,0},100,100,30,40,(FLOAT)(mapw / ROW * 3),1,0,false };
-	Stats[2] = { {0,0},{0,0},200,200,40,70,(FLOAT)(mapw / ROW * 3),1,0,false };
-	Stats[3] = { {0,0},{0,0},200,200,15,40,(FLOAT)(mapw / ROW),1,0,false };
-	Stats[4] = { {0,0},{0,0},350,350,10,65,(FLOAT)(mapw / ROW),1,0,false };
+	Stats[2] = { {0,0},{0,0},100,100,40,70,(FLOAT)(mapw / ROW * 3),1,0,false };
+	Stats[3] = { {0,0},{0,0},200,200,20,40,(FLOAT)(mapw / ROW),1,0,false };
+	Stats[4] = { {0,0},{0,0},400,400,15,65,(FLOAT)(mapw / ROW),1,0,false };
 	Stats[5] = { {0,0},{0,0},250,250,40,80,(FLOAT)(mapw / ROW),1,0,false };
 	Stats[6] =  {{0,0},{0,0},150,150,30,50,(FLOAT)(mapw / ROW / 2),1,1,false};
 	
@@ -333,7 +422,7 @@ void GameManager::Update()
 	int i;
 	for (i = 0; i < enems.size(); i++)
 	{
-		if (ch.isArrive(enems[i]))
+		if (enems[i]->path.size() == enems[i]->pathcount + 1)
 		{
 			enems.erase(enems.begin() + i);
 			gs.life--;
@@ -367,14 +456,14 @@ void GameManager::Update()
 		}
 	}
 
-	for (i = 0; i < projs.size(); i++)
+	/*for (i = 0; i < projs.size(); i++)
 	{
 		ch.Move(projs[i], rect);
 		if (projs[i]->cs.death)
 		{
 			projs.erase(projs.begin() + i);
 		}
-	}
+	}*/
 
 	for (i = 0; i < 6; i++)
 	{
@@ -390,7 +479,7 @@ void GameManager::Play(HDC hdc)
 	HDC memDC;
 	HBITMAP oldBit, newBit;
 	int w = rect.right / ROW;
-	int h = rect.bottom / (WCOL);
+	int h = rect.bottom / WCOL;
 
 	memDC = CreateCompatibleDC(hdc);
 
@@ -399,10 +488,17 @@ void GameManager::Play(HDC hdc)
 
 	Graphics* graphic = new Graphics(memDC);
 
+	SolidBrush brush(Color(130, 170, 170, 170));
 	graphic->DrawImage(MapImage, 0, 0, rect.right, rect.bottom);
+	graphic->FillRectangle(&brush, 0, 0, rect.right, rect.bottom * 2 / WCOL);
+	graphic->FillRectangle(&brush, 0, mapy, rect.right / WCOL, rect.bottom * 6 / WCOL);
+	graphic->FillRectangle(&brush, 0, mapy + maph, rect.right, rect.bottom * 2 / WCOL);
+	graphic->FillRectangle(&brush, mapx + mapw, mapy, rect.right * 2 / WCOL, rect.bottom * 6 / WCOL);
 	DrawEnemy(memDC,graphic);
 	DrawHero(memDC, graphic);
 	DrawBuyableTile(graphic);
+	DrawGameInfo(graphic);
+	DrawCoin(graphic);
 	if (state == 1)
 	{
 		RangeSelected(graphic);
@@ -423,19 +519,19 @@ void GameManager::Play(HDC hdc)
 	DeleteDC(memDC);
 }
 
-void GameManager::ShootProj(Hero* hero)
-{
-	POINT pt;
-	if (hero->cs.cnt == hero->cs.atkspd)
-	{
-		Projectile* p = new Projectile;
-		pt = hero->cs.curPos;
-		p->cs.curPos = p->init = pt;
-		p->cs.dir = hero->cs.dir;
-		p->cs.range = hero->cs.range;
-		projs.push_back(p);
-	}
-}
+//void GameManager::ShootProj(Hero* hero)
+//{
+//	POINT pt;
+//	if (hero->cs.cnt == hero->cs.atkspd)
+//	{
+//		Projectile* p = new Projectile;
+//		pt = hero->cs.curPos;
+//		p->cs.curPos = p->init = pt;
+//		p->cs.dir = hero->cs.dir;
+//		p->cs.range = hero->cs.range;
+//		projs.push_back(p);
+//	}
+//}
 
 void GameManager::Attack(Enemy* e)
 {
@@ -451,7 +547,8 @@ void GameManager::Attack(Enemy* e)
 		e->cs.cnt = 1;
 		while (i < heros.size())
 		{
-			if (heros[i]->cs.curPos.x == pt.x && heros[i]->cs.curPos.y == pt.y)
+			if (heros[i]->cs.curPos.x == pt.x && 
+				heros[i]->cs.curPos.y == pt.y)
 			{
 				ch.Damaged(heros[i], e->cs.dmg);
 				if (heros[i]->cs.hp <= 0)
@@ -503,6 +600,6 @@ void GameManager::close()
 		delete enems[i];
 	for (i = 0; i < heros.size(); i++)
 		delete heros[i];
-	for (i = 0; i < projs.size(); i++)
-		delete projs[i];
+	/*for (i = 0; i < projs.size(); i++)
+		delete projs[i];*/
 }

@@ -21,7 +21,6 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 
 static RECT rectView;
 ULONG_PTR g_GdiToken;
-HWND    ChildWnd[3];
 MapTool mt;
 GameManager gm;
 GameStatus gs;
@@ -33,14 +32,11 @@ HWND MhBtn[5];
 void GDI_Init();
 void GDI_End();
 void setBtns(HWND);
-void printGameStatus(HDC);
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK    GameWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK    MapToolWndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -266,10 +262,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         hdc = BeginPaint(hWnd, &ps);
 
         if (state == 0 || state == 1)
-        {
             gm.Play(hdc);
-            printGameStatus(hdc);
-        }
         else if (state == 2)
             gm.DrawMain(hdc);
         else if (state == 3)
@@ -359,19 +352,4 @@ void setBtns(HWND hWnd)
         ShowWindow(hBtn[i], SW_SHOW);
     for (int i = 0; i < 5; i++)
         ShowWindow(MhBtn[i], SW_HIDE);
-}
-
-void printGameStatus(HDC hdc)
-{
-    gs = gm.CurStatus();
-
-    TCHAR strTest[32];
-    _stprintf_s(strTest, _countof(strTest), _T("Stage : %d"), gs.stage);
-    TextOut(hdc, 10, 10, strTest, _tcslen(strTest));
-    _stprintf_s(strTest, _countof(strTest), _T("Coin : %d"), gs.coin);
-    TextOut(hdc, 10, 30, strTest, _tcslen(strTest));
-    _stprintf_s(strTest, _countof(strTest), _T("Life : %d"), gs.life);
-    TextOut(hdc, 10, 50, strTest, _tcslen(strTest));
-    _stprintf_s(strTest, _countof(strTest), _T("Wave : %d"), gs.wave);
-    TextOut(hdc, rectView.right / 2, 10, strTest, _tcslen(strTest));
 }

@@ -31,6 +31,7 @@ void MapTool::Draw(HWND hWnd, HDC hdc,int n)
 {
 	HDC memDC;
 	HBITMAP oldBit, newBit;
+	Pen pen(Color(255, 255, 0, 0));
 	TCHAR strTest[32];
 	int sw = imgs[1]->GetWidth();
 	int sh = imgs[1]->GetHeight();
@@ -44,7 +45,7 @@ void MapTool::Draw(HWND hWnd, HDC hdc,int n)
 
 	DrawSP(memDC, n);
 	DrawCurTile(graphic);
-	//graphic->DrawImage(imgs[3], mapx, mapy, mapw, maph);
+	graphic->DrawRectangle(&pen, mapx, mapy, mapw, maph);
 	
 	for (int i = 0; i < ROW; ++i)
 	{
@@ -72,7 +73,7 @@ void MapTool::DrawCurTile(Graphics* graphic)
 {
 	int wh = spw / 7;
 	Pen pen(Color(255, 0, 0), 3);
-	graphic->DrawRectangle(&pen, spx + curTile.x*wh, spy + curTile.y * wh, wh, wh);
+	graphic->DrawRectangle(&pen, spx + curTile.x * wh, spy + curTile.y * wh, wh, wh);
 }
 
 void MapTool::SetTile(POINT pt)

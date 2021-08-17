@@ -15,12 +15,16 @@ private:
 	RECT rect;
 
 	Image* MainMenu;
+	Image* GameInfo;
 	Image* MapImage;
 	Image* EnemyImage[6];
 	Image* HeroImage;
 	Image* HeroIcon;
 	Image* HeroPixel;
 	Image* HeroText;
+	Image* HeroName;
+	Image* Coin;
+	Image* CoinText;
 	Image* ProjImage[6];
 
 	vector<Hero*> HeroInfo;
@@ -30,6 +34,7 @@ private:
 	POINT destin = { 7,6 };
 	BOOL buyAble[6];
 	int cost[6] = { 100,150,200,150,200,300 };
+	int pcost[18] = { 1,0,0,1,5,0,2,0,0,1,5,0,2,0,0,3,0,0 };
 	int MapInfo[ROW][COL] = { 0 };
 	// 0: ºóÄ­ /  1: ±æ /  2: Ãâ¹ß / 3: µµÂø / 4: ¿µ¿õ
 	int mapw, maph, mapx, mapy, state, hnum;
@@ -44,10 +49,12 @@ private:
 	void AdjSelected(Graphics*);
 	void DrawBuyableTile(Graphics*);
 	void DrawHeroInfo(HDC hdc, Graphics*);
+	void DrawGameInfo(Graphics*);
+	void DrawCoin(Graphics*);
 public:
 	vector<Hero*> heros;
 	vector<Enemy*> enems;
-	vector<Projectile*> projs;
+	//vector<Projectile*> projs;
 	GameManager();
 	~GameManager() {}
 	Utils ut;
@@ -60,10 +67,10 @@ public:
 	void setState(int s) { state = s; }
 	void setHnum(int h) { hnum = h; }
 	BOOL isBuyable(int hnum) { return buyAble[hnum]; }
-	void Collision(Enemy* e);
-	void ShootProj(Hero*);
+	void Collision(Enemy*);
+	//void ShootProj(Hero*);
 	void Attack(Enemy*);
-
+	
 	void Update();
 	void Play(HDC);
 	GameStatus CurStatus() { return gs; }
