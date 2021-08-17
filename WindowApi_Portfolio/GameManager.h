@@ -14,8 +14,10 @@ private:
 	Character ch;
 	RECT rect;
 
+	Image* Title;
 	Image* MainMenu;
-	Image* GameInfo;
+	Image* GameInfo[2];
+	Image* PlayPause;
 	Image* MapImage;
 	Image* EnemyImage[6];
 	Image* HeroImage;
@@ -38,7 +40,7 @@ private:
 	int MapInfo[ROW][COL] = { 0 };
 	// 0: 빈칸 /  1: 길 /  2: 출발 / 3: 도착 / 4: 영웅
 	int mapw, maph, mapx, mapy, state, hnum;
-	// state < 0: 플레이 / 1: 일시정지 >
+	// state < 0: 플레이 / 1: 일시정지 / 2: 영웅선택 >
 
 	void FindPath();
 	void setImages();

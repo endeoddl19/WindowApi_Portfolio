@@ -237,12 +237,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 gm.setHnum(hnum);
                 state = 1;
             }
-            else if (state == 1 && gm.isBuyable(hnum) && y < rectView.bottom * 8 / WCOL)
+            else if (state == 1 && gm.isBuyable(hnum) && y < rectView.bottom * 8 / WCOL
+                && x < rectView.right * 19 / WCOL / 2 - 20)
             {
                 gm.CreateHero({ x, y }, hnum);
                 state = 0;
                 gm.setState(0);
             }
+            else if (state == 1 && x > rectView.right * 19 / WCOL / 2 - 20
+                && y < rectView.bottom / WCOL / 2)
+            {
+                state = 0;
+                gm.setState(0);
+            }
+            else if (state == 0 && x > rectView.right * 19 / WCOL / 2 - 20
+                && y < rectView.bottom / WCOL / 2)
+                state = 1;
         }
         else if (state == 3)
         {

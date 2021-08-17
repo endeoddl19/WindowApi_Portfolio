@@ -11,8 +11,11 @@ void GameManager::FindPath()
 
 void GameManager::setImages()
 {
+	Title = Image::FromFile((WCHAR*)L"images/Title.png");
 	MainMenu = Image::FromFile((WCHAR*)L"images/MainBackground.png");
-	GameInfo = Image::FromFile((WCHAR*)L"images/GameInfo.png");
+	PlayPause = Image::FromFile((WCHAR*)L"images/playpause.png");
+	GameInfo[0] = Image::FromFile((WCHAR*)L"images/GameInfo.png");
+	GameInfo[1] = Image::FromFile((WCHAR*)L"images/GameInfo2.png");
 	MapImage = Image::FromFile((WCHAR*)L"maps/back2_2.png");
 	EnemyImage[0] = Image::FromFile((WCHAR*)L"images/EnemyLeft.png");
 	EnemyImage[1] = Image::FromFile((WCHAR*)L"images/EnemyRight.png");
@@ -25,12 +28,12 @@ void GameManager::setImages()
 	HeroImage = Image::FromFile((WCHAR*)L"images/Heros_img.png");
 	HeroName = Image::FromFile((WCHAR*)L"images/Heros_name.png");
 	HeroText = Image::FromFile((WCHAR*)L"images/Heros_info.png");
-	ProjImage[0] = Image::FromFile((WCHAR*)L"images/Khan.png");
-	ProjImage[1] = Image::FromFile((WCHAR*)L"images/Ram_Back.png");
+	ProjImage[0] = Image::FromFile((WCHAR*)L"images/speer.png");
+	ProjImage[1] = Image::FromFile((WCHAR*)L"images/speer.png");
 	ProjImage[2] = Image::FromFile((WCHAR*)L"images/canon.png");
 	ProjImage[3] = Image::FromFile((WCHAR*)L"images/speer.png");
-	ProjImage[4] = Image::FromFile((WCHAR*)L"images/Leo_Back.png");
-	ProjImage[5] = Image::FromFile((WCHAR*)L"images/YSS.png");
+	ProjImage[4] = Image::FromFile((WCHAR*)L"images/speer.png");
+	ProjImage[5] = Image::FromFile((WCHAR*)L"images/speer.png");
 	Coin = Image::FromFile((WCHAR*)L"images/coin.png");
 	CoinText = Image::FromFile((WCHAR*)L"images/coin_text.png");
 }
@@ -40,25 +43,29 @@ void GameManager::DrawEnemy(HDC hdc, Graphics* graphic)
 	int d;
 	POINT pt, dir;
 	Pen pen(Color(255, 0, 0));
-	SolidBrush brush(Color(255, 255, 0, 0));
+	SolidBrush brush(Color(125, 255, 0, 0));
 	for (int i = 0; i < enems.size(); i++)
 	{
 		pt = enems[i]->cs.curPos;
 		dir = enems[i]->curDir;
 		if (dir.x == -1) d = 0;
 		else d = 1;
-		if (enems[i]->cs.state == 1)
-			graphic->DrawImage(EnemyImage[d], 
-				Rect(pt.x - mapw / ROW / 2,pt.y - maph / COL / 2,
-				mapw / ROW, maph / COL),
+		if (enems[i]->cs.state == 1 || enems[i]->cs.state == 3)
+		{
+			graphic->DrawImage(EnemyImage[d],
+				Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
+					mapw / ROW, maph / COL),
 				0, 0, 48, 48, Unit::UnitPixel);
+			if (enems[i]->cs.state == 3)
+				graphic->FillEllipse(&brush, INT(pt.x-20), INT(pt.y-20), 40, 40);
+		}
 		else if (enems[i]->cs.state == 2)
 			graphic->DrawImage(EnemyImage[d+2], 
 				Rect(pt.x - mapw / ROW / 2, pt.y - maph / COL / 2,
 				mapw / ROW, maph / COL),
 				(int)ch.getAtk(enems[i]) * 48, 0, 
 				48, 48, Unit::UnitPixel);
-
+				
 		DrawHpBar(hdc, pt, ch.GetHP(enems[i]));
 	}
 }
@@ -191,15 +198,20 @@ void GameManager::DrawHeroInfo(HDC hdc, Graphics* graphic)
 
 void GameManager::DrawGameInfo(Graphics* graphic)
 {
-	graphic->DrawImage(GameInfo,
-		Rect(rect.right * 3 / WCOL, 10, rect.right * 4 / WCOL, rect.bottom * 3 / WCOL / 4),
-		727, 0, 551, 160, Unit::UnitPixel);
-	graphic->DrawImage(GameInfo,
-		Rect(rect.right * 2 / WCOL, 20 + rect.bottom * 3 / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL/2),
+	graphic->DrawImage(GameInfo[1],
+		Rect(10, rect.bottom * 3 / WCOL, rect.right / WCOL - 20, rect.bottom * 4 / WCOL),
+		0, 0, 59, 437, Unit::UnitPixel);
+	graphic->DrawImage(GameInfo[0],
+		Rect(rect.right * 3 / WCOL / 2, rect.bottom / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL ),
 		0, 0, 387, 160, Unit::UnitPixel);
-	graphic->DrawImage(GameInfo,
-		Rect(rect.right * 5 / WCOL, 20 + rect.bottom * 3 / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL/2),
+	graphic->DrawImage(GameInfo[0],
+		Rect(rect.right * 21 / WCOL / 4, rect.bottom / WCOL / 4, rect.right * 2 / WCOL, rect.bottom / WCOL ),
 		387, 0, 340, 160, Unit::UnitPixel);
+	int s = state;
+	if (s > 1) s = 1;
+	graphic->DrawImage(PlayPause,
+		Rect(rect.right * 19 / WCOL / 2 - 20, 20, rect.right / WCOL / 2, rect.bottom / WCOL / 2),
+		s * 256, 0, 256, 256, Unit::UnitPixel);
 }
 
 void GameManager::DrawCoin(Graphics* graphic)
@@ -211,8 +223,8 @@ void GameManager::DrawCoin(Graphics* graphic)
 		Rect(rect.right * 2 / WCOL, mapy + maph + rect.bottom / WCOL / 2,
 			rect.right / WCOL, rect.bottom / WCOL),
 		0, 0, 200, 200, Unit::UnitPixel);
-
-	for (i = 0; i < 6; i++)
+	
+	for (i = 0; i < 6; i++) // 영웅 가격
 	{
 		graphic->DrawImage(Coin,
 			Rect(i * rect.right / WCOL + rect.right * 4 / WCOL + rect.right / WCOL / 6,
@@ -240,7 +252,8 @@ void GameManager::DrawCoin(Graphics* graphic)
 			
 	}
 
-	s1 = s2 = 0;
+	// 전체 코인
+	s1 = s2 = 0; 
 	a1 = gs.coin / 100;
 	for (i = 0; i < a1; i++)
 		s1 += arr[i];
@@ -261,6 +274,37 @@ void GameManager::DrawCoin(Graphics* graphic)
 		Rect(rect.right * 3 / WCOL + rect.right * 2 / WCOL / 3, mapy + maph + rect.bottom / WCOL / 2,
 			rect.right / WCOL / 3, rect.bottom / WCOL),
 		0, 0, 73, 120, Unit::UnitPixel);
+
+	// wave, life
+	s1 = s2 = 0;
+	a1 = gs.wave / 10;
+	for (i = 0; i < a1; i++)
+		s1 += arr[i];
+	a2 = gs.wave - a1 * 10;
+	for (i = 0; i < a2; i++)
+		s2 += arr[i];
+
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 15 / WCOL / 4, rect.bottom / WCOL / 4, rect.right / WCOL / 2, rect.bottom / WCOL),
+		s1, 0, arr[a1], 120, Unit::UnitPixel);
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 17 / WCOL / 4, rect.bottom / WCOL / 4, rect.right / WCOL / 2, rect.bottom / WCOL),
+		s2, 0, arr[a2], 120, Unit::UnitPixel);
+
+	s1 = s2 = 0;
+	a1 = gs.life / 10;
+	for (i = 0; i < a1; i++)
+		s1 += arr[i];
+	a2 = gs.life - a1 * 10;
+	for (i = 0; i < a2; i++)
+		s2 += arr[i];
+
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 15 / WCOL / 2, rect.bottom / WCOL / 4, rect.right / WCOL / 2, rect.bottom / WCOL),
+		s1, 0, arr[a1], 120, Unit::UnitPixel);
+	graphic->DrawImage(CoinText,
+		Rect(rect.right * 8 / WCOL, rect.bottom / WCOL / 4, rect.right / WCOL / 2, rect.bottom / WCOL),
+		s2, 0, arr[a2], 120, Unit::UnitPixel);
 }
 
 GameManager::GameManager()
@@ -315,10 +359,10 @@ void GameManager::SetGame(RECT rt)
 	Stats[0] = { {0,0},{0,0},100,100,15,20,(FLOAT)(mapw / ROW * 2),1,0,false };
 	Stats[1] = { {0,0},{0,0},100,100,30,40,(FLOAT)(mapw / ROW * 3),1,0,false };
 	Stats[2] = { {0,0},{0,0},100,100,40,70,(FLOAT)(mapw / ROW * 3),1,0,false };
-	Stats[3] = { {0,0},{0,0},200,200,20,40,(FLOAT)(mapw / ROW),1,0,false };
+	Stats[3] = { {0,0},{0,0},200,200,25,40,(FLOAT)(mapw / ROW),1,0,false };
 	Stats[4] = { {0,0},{0,0},400,400,15,65,(FLOAT)(mapw / ROW),1,0,false };
 	Stats[5] = { {0,0},{0,0},250,250,40,80,(FLOAT)(mapw / ROW),1,0,false };
-	Stats[6] =  {{0,0},{0,0},150,150,30,50,(FLOAT)(mapw / ROW / 2),1,1,false};
+	Stats[6] =  {{0,0},{0,0},130,130,30,50,(FLOAT)(mapw / ROW / 2),1,1,false};
 	
 	for (i = 0; i < 6; i++)
 	{
@@ -347,6 +391,7 @@ void GameManager::DrawMain(HDC hdc)
 {
 	HDC memDC;
 	HBITMAP oldBit, newBit;
+	static int cnt=1;
 
 	memDC = CreateCompatibleDC(hdc);
 
@@ -356,7 +401,38 @@ void GameManager::DrawMain(HDC hdc)
 	Graphics* graphic = new Graphics(memDC);
 
 	graphic->DrawImage(MainMenu, 0, 0, rect.right, rect.bottom);
+	graphic->DrawImage(Title,
+		Rect(rect.right * 2 / WCOL, rect.bottom * 2 / WCOL, rect.right * 6 / WCOL, rect.bottom * 3 / WCOL),
+		0, 0, 465, 95, Unit::UnitPixel);
 
+	graphic->DrawImage(HeroPixel,
+		Rect(rect.right / WCOL + 70, rect.bottom * 5 / WCOL, 50, 50),
+		128, 0, 64, 64, Unit::UnitPixel);
+	graphic->DrawImage(HeroPixel,
+		Rect(rect.right * 3 / WCOL + 50, rect.bottom * 5 / WCOL + 20, 50, 50),
+		64, 0, 64, 64, Unit::UnitPixel);
+	graphic->DrawImage(HeroPixel,
+		Rect(rect.right * 4 / WCOL - 10, rect.bottom * 5 / WCOL + 80, 50, 50),
+		192, 0, 64, 64, Unit::UnitPixel);
+	graphic->DrawImage(HeroPixel,
+		Rect(rect.right * 6 / WCOL + 180, rect.bottom * 5 / WCOL + 80, 50, 50),
+		0, 0, 64, 64, Unit::UnitPixel);
+	graphic->DrawImage(EnemyImage[3],
+		Rect(rect.right / WCOL + 20, rect.bottom * 5 / WCOL, 50, 50),
+		cnt / 10 * 48, 0, 48, 48, Unit::UnitPixel);
+	graphic->DrawImage(EnemyImage[2],
+		Rect(rect.right * 3 / WCOL + 100, rect.bottom * 5 / WCOL + 20, 50, 50),
+		cnt / 10 * 48, 0, 48, 48, Unit::UnitPixel);
+	graphic->DrawImage(EnemyImage[2],
+		Rect(rect.right * 4 / WCOL + 40, rect.bottom * 5 / WCOL + 80, 50, 50),
+		cnt / 10 * 48, 0, 48, 48, Unit::UnitPixel);
+	graphic->DrawImage(EnemyImage[3],
+		Rect(rect.right * 6 / WCOL + 130, rect.bottom * 5 / WCOL + 80, 50, 50),
+		cnt / 10 * 48, 0, 48, 48, Unit::UnitPixel);
+	
+	if (cnt == 50) cnt = 1;
+	else cnt++;
+		
 	delete graphic;
 
 	BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
@@ -430,7 +506,7 @@ void GameManager::Update()
 		else if (enems.size() > 0)
 		{
 			Collision(enems[i]);
-			if (enems[i]->cs.state == 1)
+			if (enems[i]->cs.state == 1 || enems[i]->cs.state == 3)
 				ch.Move(enems[i], rect);
 			else if (enems[i]->cs.state == 2)
 				Attack(enems[i]);

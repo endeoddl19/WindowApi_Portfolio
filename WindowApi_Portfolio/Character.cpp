@@ -15,6 +15,7 @@ void Character::Target(Hero* h, vector<Enemy*> enems, RECT rt)
 			if (h->cs.cnt == h->cs.atkspd)
 			{
 				Damaged(enems[i], h->cs.dmg);
+				enems[i]->cs.state = 3;
 				h->cs.cnt = 1;
 				if (enems[i]->cs.hp <= 0)
 					enems[i]->cs.death = true;
@@ -39,7 +40,7 @@ void Character::FindAtkDir(Hero* hero, vector<POINT> pts, RECT rect)
 		pt.y -= rect.bottom * 2 / WCOL;
 		vector<POINT> temp;
 		int min = 1024512, m = 0;
-		pt = ut.ToTilePos(pt, rect.right * 7 / WCOL, rect.bottom / 2);
+		pt = ut.ToTilePos(pt, rect.right * 7 / WCOL, rect.bottom * 6 / WCOL);
 
 		int i = 0;
 		for (i = 0; i < pts.size(); i++)
